@@ -206,6 +206,8 @@ class GameObject {
 class ReelRender extends Component {
     visibleSymbols: SymbolSprite[] = [];
     reelSize = { width: 5, height: 4 };
+    stencilMask: Graphics;
+    cellSize = { width: 200, height: 145 };
 
 
     reelPosition: { x: number, y: number } = { x: 0, y: 0 };
@@ -216,7 +218,17 @@ class ReelRender extends Component {
         setTimeout(() => {
             console.log('this.gameObject', this.gameObject);
             this.renderSymbolsOnStart();
+            this.stencilMask = new Graphics()
+                .fill({
+                    color: 0x000000,
+                    alpha: 0.5,
+                })
+                .rect(0, 0, this.reelSize.width * this.cellSize.width, this.reelSize.height * this.cellSize.height)
+                .endFill();
 
+            this.gameObject.holder.addChild(this.stencilMask);
+            this.gameObject.holder.mask = this.stencilMask;
+            this.stencilMask.position.set(this.reelPosition.x - this.reelSize.width * this.cellSize.width * 0.5, this.reelPosition.y - this.reelSize.height * this.cellSize.height * 0.5);
         }, 1000);
     }
 
@@ -232,12 +244,13 @@ class ReelRender extends Component {
             'low4',
         ];
 
-        const cellSize = { width: 200, height: 145 };
 
         const createSymbol = (sprite: Sprite) => {
             const symbol = new SymbolSprite(sprite);
             return symbol;
         }
+
+        const cellSize = this.cellSize;
 
         // const startPosition = { x: this.reelPosition.x + cellSize.width * 0.5, y: this.reelPosition.y + cellSize.height * 0.5 };
         const startPosition = this.reelPosition
