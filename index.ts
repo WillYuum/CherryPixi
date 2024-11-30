@@ -1,4 +1,4 @@
-import { Application, Assets, Sprite, Container, ViewContainer, Rectangle, Graphics, Ticker } from 'pixi.js';
+import { Application, Assets, Sprite, Container, ViewContainer, Rectangle, Graphics, Ticker, TickerCallback } from 'pixi.js';
 import { Machine } from "./src/Machine";
 import { urls } from "./img";
 import { SpinButton } from "./src/SpinButton";
@@ -115,9 +115,8 @@ class Game {
     app.ticker.add(({ deltaTime }) => {
         main.update(deltaTime);
 
-        app.ticker.add((ticker: Ticker) => {
-            ComponentManager.getInstance().updateComponents(ticker.deltaTime);
-        });
+        ComponentManager.getInstance().updateComponents(deltaTime);
+        // });
     });
 })();
 
@@ -343,7 +342,7 @@ class ComponentManager {
 
 
 class SpinRender extends Component {
-    spinSpeed: number = 0.1;
+    spinSpeed: number = 1.0;
 
     reelRender: ReelRender;
 
