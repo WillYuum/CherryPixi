@@ -1,4 +1,4 @@
-import { Application, Assets, Sprite, Container, ViewContainer, Rectangle, Graphics } from 'pixi.js';
+import { Application, Assets, Sprite, Container, ViewContainer, Rectangle, Graphics, Ticker } from 'pixi.js';
 import { Machine } from "./src/Machine";
 import { urls } from "./img";
 import { SpinButton } from "./src/SpinButton";
@@ -8,6 +8,9 @@ import { SymbolSprite } from "./src/SymbolSprite";
 //     width: 1920,
 //     height: 1080
 // };
+
+
+// Object freeze of events player can do and currently is pressed_spin
 
 
 
@@ -29,6 +32,7 @@ class MainScene extends Container {
         const reels = new GameObject("Reels", this);
 
         const reelRender = reels.addComponent(new ReelRender(reelPosition));
+        const spinRender = reels.addComponent(new SpinRender());
 
         const spriteComp = reels.addVisualComponent(Sprite.from('reels_base'));
         spriteComp.anchor.set(0.5);
@@ -49,6 +53,11 @@ class MainScene extends Container {
 
         this._machine = machine;
         this._spinButton = spinButton;
+
+        spinButton.on('click', () => {
+            // machine.startSpin(); 
+            spinRender.StartSpin();
+        });
     }
 
     update(dt) {
@@ -105,6 +114,10 @@ class Game {
 
     app.ticker.add(({ deltaTime }) => {
         main.update(deltaTime);
+
+        app.ticker.add((ticker: Ticker) => {
+            ComponentManager.getInstance().updateComponents(ticker.deltaTime);
+        });
     });
 })();
 
@@ -112,6 +125,15 @@ class Game {
 
 class Component {
     gameObject: GameObject;
+
+    constructor() {
+        // Register with the global component manager
+        ComponentManager.getInstance().addComponent(this);
+    }
+
+    update(deltaTime: number) {
+        // Component-specific update logic
+    }
 }
 
 
@@ -119,7 +141,7 @@ class Component {
 
 class GameObject {
     name: string;
-    components: { [key: string]: Component } = {};
+    components: Component[] = [];
     viewComponents: ViewContainer[] = [];
     holder: Container;
 
@@ -131,20 +153,31 @@ class GameObject {
 
 
     addComponent<T extends Component>(component: T): T {
-        const componentName = component.constructor.name.toLowerCase();
-        this.components[componentName] = component;
+        // const componentName = component.constructor.name.toLowerCase();
+        // this.components[componentName] = component;
+        this.components.push(component);
 
         component.gameObject = this;
 
         return component;
     }
 
-    getComponent(componentName: string): Component | undefined {
-        return this.components[componentName];
+    // getComponent(componentName: string): Component | undefined {
+    //     return this.components[componentName];
+    // }
+    getComponent<T extends Component>(componentClass: new (...args: any[]) => T): T | undefined {
+        return this.components.find(c => c instanceof componentClass) as T | undefined;
     }
 
-    removeComponent(componentName: string): void {
-        this.components[componentName].gameObject = null;
+    removeComponent(component: Component): Boolean {
+        const index = this.components.indexOf(component);
+        if (index !== -1) {
+            ComponentManager.getInstance().removeComponent(component);
+            this.components.splice(index, 1);
+            return true;
+        }
+
+        return false;
     }
 
     addVisualComponent<T extends ViewContainer>(viewComponent: T): T {
@@ -171,7 +204,7 @@ class GameObject {
 
 
 class ReelRender extends Component {
-    visibleSymbols: Symbol[] = [];
+    visibleSymbols: SymbolSprite[] = [];
     reelSize = { width: 5, height: 4 };
 
 
@@ -242,6 +275,7 @@ class ReelRender extends Component {
 
             symbol.position.set(xPos, yPos);
             this.gameObject.holder.addChild(symbol);
+            this.visibleSymbols.push(symbol);
         }
 
         // for (let i = 0; i < toalSymbolSize; i++) {
@@ -255,15 +289,86 @@ class ReelRender extends Component {
 
         //     this.gameObject.holder.addChild(symbol);
         // }
+    }
+}
 
 
+class ComponentManager {
+    private static instance: ComponentManager;
+    private components: Set<Component> = new Set();
 
+    // Private constructor to prevent direct instantiation
+    private constructor() { }
 
-
-
+    // Get the singleton instance
+    static getInstance() {
+        if (!this.instance) {
+            this.instance = new ComponentManager();
+        }
+        return this.instance;
     }
 
+    // Register a component for updating
+    addComponent(component: Component) {
+        this.components.add(component);
+    }
+
+    // Remove a component when it's no longer needed
+    removeComponent(component: Component) {
+        this.components.delete(component);
+    }
+
+    // Update all components
+    updateComponents(deltaTime: number) {
+        for (let component of this.components) {
+            component.update(deltaTime);
+        }
+    }
 }
+
+
+
+
+class SpinRender extends Component {
+    spinSpeed: number = 0.1;
+
+    reelRender: ReelRender;
+
+    constructor() {
+        super();
+
+        setTimeout(() => {
+
+            this.reelRender = this.gameObject.getComponent(ReelRender);
+        }, 1000);
+    }
+
+    isSpinning: boolean = false;
+
+    public StartSpin() {
+        console.log('StartSpin');
+        this.isSpinning = true;
+    }
+
+    public EndSpin() {
+        this.isSpinning = false
+    }
+
+    renderSpin(dt: number) {
+        this.reelRender.visibleSymbols.forEach(symbol => {
+            symbol.position.y += this.spinSpeed * dt;
+        });
+    }
+
+
+
+    public update(dt: number) {
+        if (this.isSpinning) {
+            this.renderSpin(dt);
+        }
+    }
+}
+
 
 
 
