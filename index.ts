@@ -4,15 +4,6 @@ import { urls } from "./img";
 import { SpinButton } from "./src/SpinButton";
 import { SymbolSprite } from "./src/SymbolSprite";
 
-// const screen = {
-//     width: 1920,
-//     height: 1080
-// };
-
-
-// Object freeze of events player can do and currently is pressed_spin
-
-
 
 class MainScene extends Container {
     private _machine: Machine;
@@ -55,7 +46,6 @@ class MainScene extends Container {
         this._spinButton = spinButton;
 
         spinButton.on('click', () => {
-            // machine.startSpin(); 
             spinRender.StartSpin();
         });
     }
@@ -116,7 +106,6 @@ class Game {
         main.update(deltaTime);
 
         ComponentManager.getInstance().updateComponents(deltaTime);
-        // });
     });
 })();
 
@@ -126,12 +115,10 @@ class Component {
     gameObject: GameObject;
 
     constructor() {
-        // Register with the global component manager
         ComponentManager.getInstance().addComponent(this);
     }
 
     update(deltaTime: number) {
-        // Component-specific update logic
     }
 }
 
@@ -152,8 +139,6 @@ class GameObject {
 
 
     addComponent<T extends Component>(component: T): T {
-        // const componentName = component.constructor.name.toLowerCase();
-        // this.components[componentName] = component;
         this.components.push(component);
 
         component.gameObject = this;
@@ -161,9 +146,6 @@ class GameObject {
         return component;
     }
 
-    // getComponent(componentName: string): Component | undefined {
-    //     return this.components[componentName];
-    // }
     getComponent<T extends Component>(componentClass: new (...args: any[]) => T): T | undefined {
         return this.components.find(c => c instanceof componentClass) as T | undefined;
     }
@@ -204,7 +186,7 @@ class GameObject {
 
 class ReelRender extends Component {
     visibleSymbols: SymbolSprite[] = [];
-    reelSize = { width: 5, height: 4 };
+    gridSize = { width: 5, height: 4 };
     stencilMask: Graphics;
     cellSize = { width: 200, height: 145 };
 
@@ -222,12 +204,12 @@ class ReelRender extends Component {
                     color: 0x000000,
                     alpha: 0.5,
                 })
-                .rect(0, 0, this.reelSize.width * this.cellSize.width, this.reelSize.height * this.cellSize.height)
+                .rect(0, 0, this.gridSize.width * this.cellSize.width, this.gridSize.height * this.cellSize.height)
                 .endFill();
 
             this.gameObject.holder.addChild(this.stencilMask);
             this.gameObject.holder.mask = this.stencilMask;
-            this.stencilMask.position.set(this.reelPosition.x - this.reelSize.width * this.cellSize.width * 0.5, this.reelPosition.y - this.reelSize.height * this.cellSize.height * 0.5);
+            this.stencilMask.position.set(this.reelPosition.x - this.gridSize.width * this.cellSize.width * 0.5, this.reelPosition.y - this.gridSize.height * this.cellSize.height * 0.5);
         }, 1000);
     }
 
@@ -251,10 +233,9 @@ class ReelRender extends Component {
 
         const cellSize = this.cellSize;
 
-        // const startPosition = { x: this.reelPosition.x + cellSize.width * 0.5, y: this.reelPosition.y + cellSize.height * 0.5 };
         const startPosition = this.reelPosition
 
-        const topLeftPositionOfReel = { x: startPosition.x - this.reelSize.width * cellSize.width * 0.5, y: startPosition.y - this.reelSize.height * cellSize.height * 0.5 };
+        const topLeftPositionOfReel = { x: startPosition.x - this.gridSize.width * cellSize.width * 0.5, y: startPosition.y - this.gridSize.height * cellSize.height * 0.5 };
         const debugGraphics = new Graphics()
             .clear()
             .circle(topLeftPositionOfReel.x, topLeftPositionOfReel.y, 10)
@@ -263,7 +244,7 @@ class ReelRender extends Component {
 
 
         const debugReelsRect = new Graphics()
-            .rect(topLeftPositionOfReel.x, topLeftPositionOfReel.y, this.reelSize.width * cellSize.width, this.reelSize.height * cellSize.height)
+            .rect(topLeftPositionOfReel.x, topLeftPositionOfReel.y, this.gridSize.width * cellSize.width, this.gridSize.height * cellSize.height)
             .stroke(0xae040a);
 
         this.gameObject.holder.addChild(debugReelsRect);
@@ -274,13 +255,13 @@ class ReelRender extends Component {
         this.gameObject.holder.addChild(debugGraphics);
 
 
-        const toalSymbolSize = this.reelSize.width * this.reelSize.height;
+        const toalSymbolSize = this.gridSize.width * this.gridSize.height;
         for (let i = 0; i < toalSymbolSize; i++) {
             const symbol = createSymbol(Sprite.from(symbolAssetNames[i % symbolAssetNames.length]));
 
             // const row = Math.floor(i / this.reelSize.width);
-            const row = Math.floor(i / this.reelSize.width);
-            const col = i % this.reelSize.width;
+            const row = Math.floor(i / this.gridSize.width);
+            const col = i % this.gridSize.width;
 
             const xPos = topLeftPositionOfReel.x + col * cellSize.width + (cellSize.width * 0.5);
             const yPos = topLeftPositionOfReel.y + row * cellSize.height + (cellSize.height * 0.5);
@@ -289,18 +270,6 @@ class ReelRender extends Component {
             this.gameObject.holder.addChild(symbol);
             this.visibleSymbols.push(symbol);
         }
-
-        // for (let i = 0; i < toalSymbolSize; i++) {
-        //     const symbol = createSymbol(Sprite.from(symbolAssetNames[i % symbolAssetNames.length]));
-
-        //     const row = Math.floor(i / this.reelSize.width);
-        //     const col = i % this.reelSize.width;
-
-        //     symbol.position.set(col * cellSize.width, row * cellSize.height);
-
-
-        //     this.gameObject.holder.addChild(symbol);
-        // }
     }
 }
 
@@ -342,45 +311,92 @@ class ComponentManager {
 
 
 class SpinRender extends Component {
-    spinSpeed: number = 1.0;
-
+    spinSpeed: number = 25.0;
+    isSpinning: boolean = false;
     reelRender: ReelRender;
+
+    private spinDuration: number = 3.0; // Total duration of the spin in seconds
+    private columnDelayTime: number = 0.5; // Delay time between each column in seconds
+    private activeColumns: Set<number> = new Set(); // Tracks which columns are actively spinning
 
     constructor() {
         super();
 
         setTimeout(() => {
-
             this.reelRender = this.gameObject.getComponent(ReelRender);
         }, 1000);
     }
-
-    isSpinning: boolean = false;
-
-    public StartSpin() {
-        console.log('StartSpin');
-        this.isSpinning = true;
-    }
-
-    public EndSpin() {
-        this.isSpinning = false
-    }
-
-    renderSpin(dt: number) {
-        this.reelRender.visibleSymbols.forEach(symbol => {
-            symbol.position.y += this.spinSpeed * dt;
-        });
-    }
-
-
 
     public update(dt: number) {
         if (this.isSpinning) {
             this.renderSpin(dt);
         }
     }
+
+    public StartSpin() {
+        console.log("StartSpin");
+        if (this.isSpinning) return;
+
+        this.isSpinning = true;
+        this.activeColumns.clear();
+
+        const numColumns = this.reelRender.gridSize.width;
+
+        // Schedule each column to start spinning
+        for (let i = 0; i < numColumns; i++) {
+            setTimeout(() => {
+                this.activeColumns.add(i);
+                if (i === numColumns - 1) {
+                    // End the spin after the total duration
+                    setTimeout(() => this.EndSpin(), this.spinDuration * 1000);
+                }
+            }, i * this.columnDelayTime * 1000);
+        }
+    }
+
+    public EndSpin() {
+        if (!this.isSpinning) return;
+
+        this.isSpinning = false;
+        this.alignSymbolsToGrid();
+    }
+
+    renderSpin(dt: number) {
+        this.reelRender.visibleSymbols.forEach((symbol, index) => {
+            const columnIndex = index % this.reelRender.gridSize.width;
+
+            if (this.activeColumns.has(columnIndex)) {
+                symbol.position.y += this.spinSpeed * dt;
+
+                // Reset symbol to the top if it goes out of bounds
+                if (
+                    symbol.position.y >
+                    this.reelRender.reelPosition.y +
+                    this.reelRender.gridSize.height *
+                    this.reelRender.cellSize.height *
+                    0.5
+                ) {
+                    symbol.position.y -=
+                        this.reelRender.gridSize.height * this.reelRender.cellSize.height;
+                }
+            }
+        });
+    }
+
+    private alignSymbolsToGrid() {
+        const topLeftPositionOfReel = {
+            x: this.reelRender.reelPosition.x - this.reelRender.gridSize.width * this.reelRender.cellSize.width * 0.5,
+            y: this.reelRender.reelPosition.y - this.reelRender.gridSize.height * this.reelRender.cellSize.height * 0.5
+        };
+
+        this.reelRender.visibleSymbols.forEach((symbol, index) => {
+            const row = Math.floor(index / this.reelRender.gridSize.width);
+            const col = index % this.reelRender.gridSize.width;
+
+            const xPos = topLeftPositionOfReel.x + col * this.reelRender.cellSize.width + this.reelRender.cellSize.width * 0.5;
+            const yPos = topLeftPositionOfReel.y + row * this.reelRender.cellSize.height + this.reelRender.cellSize.height * 0.5;
+
+            symbol.position.set(xPos, yPos);
+        });
+    }
 }
-
-
-
-
