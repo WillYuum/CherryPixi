@@ -3,6 +3,7 @@ import { Machine } from "./src/Machine";
 import { urls } from "./img";
 import { SpinButton } from "./src/SpinButton";
 import { SymbolSprite } from "./src/SymbolSprite";
+import { Outcome } from './src/Outcome';
 
 
 class MainScene extends Container {
@@ -22,7 +23,16 @@ class MainScene extends Container {
 
         const reels = new GameObject("Reels", this);
 
-        const reelRender = reels.addComponent(new ReelRender(reelPosition));
+        const startConfig: string[][] = [
+
+            ['high3', 'low1', 'high2'],
+            ['low2', 'high3', 'low2'],
+            ['low1', 'low1', 'high3'],
+            ['low3', 'high1', 'high1'],
+            ['high1', 'high1', 'low4'],
+        ];
+
+        const reelRender = reels.addComponent(new ReelRender(reelPosition, startConfig));
         const spinRender = reels.addComponent(new SpinRender());
 
         const spriteComp = reels.addVisualComponent(Sprite.from('reels_base'));
@@ -45,8 +55,23 @@ class MainScene extends Container {
         this._machine = machine;
         this._spinButton = spinButton;
 
+        const gameLogic = new GameLogic();
+
+
+
         spinButton.on('click', () => {
-            spinRender.StartSpin();
+            const newReel = Outcome.resolve();
+
+            // const finalResult: string[][] = [
+            //     ['high3', 'low1', 'high2'],
+            //     ['low2', 'high3', 'low2'],
+            //     ['low1', 'low1', 'high3'],
+            //     ['low3', 'high1', 'high1'],
+            //     ['high1', 'high1', 'low4'],
+            // ];
+
+            gameLogic.handleWin(newReel);
+            // spinRender.StartSpin();
         });
     }
 
@@ -186,19 +211,19 @@ class GameObject {
 
 class ReelRender extends Component {
     visibleSymbols: SymbolSprite[] = [];
-    gridSize = { width: 5, height: 4 };
+    gridSize = { width: 5, height: 3 };
     stencilMask: Graphics;
-    cellSize = { width: 200, height: 145 };
+    cellSize = { width: 200, height: 192 };
 
 
     reelPosition: { x: number, y: number } = { x: 0, y: 0 };
 
-    constructor(reelPosition: { x: number, y: number }) {
+    constructor(reelPosition: { x: number, y: number }, startConfig: string[][]) {
         super();
         this.reelPosition = reelPosition;
         setTimeout(() => {
             console.log('this.gameObject', this.gameObject);
-            this.renderSymbolsOnStart();
+            this.renderSymbolsOnStart(startConfig);
 
 
             this.gameObject.holder.boundsArea = new Rectangle(0, 0, this.gridSize.width * this.cellSize.width, this.gridSize.height * this.cellSize.height);
@@ -221,16 +246,9 @@ class ReelRender extends Component {
     }
 
 
-    private renderSymbolsOnStart() {
-        const symbolAssetNames = [
-            'high1',
-            'high2',
-            'high3',
-            'low1',
-            'low2',
-            'low3',
-            'low4',
-        ];
+    private renderSymbolsOnStart(startConfig: string[][]) {
+
+        const symbolsToSpawn = startConfig.map(row => row.map(symbol => symbol)).flat();
 
 
         const createSymbol = (sprite: Sprite) => {
@@ -264,7 +282,7 @@ class ReelRender extends Component {
 
         const toalSymbolSize = this.gridSize.width * this.gridSize.height;
         for (let i = 0; i < toalSymbolSize; i++) {
-            const symbol = createSymbol(Sprite.from(symbolAssetNames[i % symbolAssetNames.length]));
+            const symbol = createSymbol(Sprite.from(symbolsToSpawn[i % symbolsToSpawn.length]));
 
             // const row = Math.floor(i / this.reelSize.width);
             const row = Math.floor(i / this.gridSize.width);
@@ -459,3 +477,100 @@ class SpinRender extends Component {
     }
 }
 
+class GameLogic {
+    private gameMechanic: WinHandler;
+
+    constructor() {
+        this.gameMechanic = new WaysToWin();
+    }
+
+    public handleWin(result: string[][]): void {
+        const win = this.gameMechanic.populateWin(result);
+
+        console.log('win', win);
+    }
+}
+
+interface WinHandler {
+    populateWin(result: string[][]): Map<string, SymTypeWinInfo>;
+}
+
+enum SymTypes {
+    high1 = 'high1',
+    high2 = 'high2',
+    high3 = 'high3',
+    low1 = 'low1',
+    low2 = 'low2',
+    low3 = 'low3',
+    low4 = 'low4',
+}
+
+class WaysToWin implements WinHandler {
+    public hasWin: Boolean = false;
+
+    constructor() { }
+
+    public populateWin(result: string[][]): Map<string, SymTypeWinInfo> {
+        console.log("Check for win in ", result);
+
+        const winMap = new Map<string, SymTypeWinInfo>();
+
+        for (const sym in SymTypes) {
+            const winInfo = this.checkForWinOfSymbol(sym as SymTypes, result);
+            const symWinInfo = new SymTypeWinInfo(winInfo.cellPosition, winInfo.isWin);
+            if (winInfo.isWin) {
+                winMap.set(sym, symWinInfo);
+            }
+        }
+
+        return winMap;
+    }
+
+    private checkForWinOfSymbol(symbol: SymTypes, result: string[][]): { cellPosition: CellPosition[]; isWin: boolean } {
+        const cellPositions: CellPosition[] = [];
+        let consecutiveWin = 0;
+
+        for (let row = 0; row < result.length; row++) {
+            const reel = result[row];
+            const matchingPositions: CellPosition[] = [];
+
+            for (let col = 0; col < reel.length; col++) {
+                if (reel[col] === symbol) {
+                    matchingPositions.push(new CellPosition(col, row));
+                }
+            }
+
+            // Update consecutive win count or reset if no match
+            if (matchingPositions.length > 0) {
+                consecutiveWin++;
+                cellPositions.push(...matchingPositions);
+            } else {
+                break;
+            }
+        }
+
+        const isWin = consecutiveWin >= 3;
+        return { cellPosition: cellPositions, isWin };
+    }
+
+}
+
+class SymTypeWinInfo {
+    public cellPositions: CellPosition[];
+    public isWin: boolean;
+
+    constructor(cellPosition: CellPosition[] = null, isWin: boolean) {
+        this.cellPositions = cellPosition;
+        this.isWin = isWin;
+    }
+}
+
+class CellPosition {
+    public reel: number;
+    public row: number;
+
+    constructor(reel: number, row: number) {
+        this.reel = reel;
+        this.row = row;
+    }
+}
