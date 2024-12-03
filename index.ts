@@ -71,7 +71,7 @@ class MainScene extends Container {
             // ];
 
             gameLogic.handleWin(newReel);
-            // spinRender.StartSpin();
+            spinRender.StartSpin(newReel);
         });
     }
 
@@ -347,6 +347,8 @@ class SpinRender extends Component {
     private activeColumns: Set<number> = new Set(); // Tracks which columns are actively spinning
     private stopColumns: Set<number> = new Set();  // Tracks which columns have stopped
 
+    private endOutcomeConfig: string[][];
+
     constructor() {
         super();
 
@@ -365,8 +367,10 @@ class SpinRender extends Component {
         }
     }
 
-    public StartSpin() {
+    public StartSpin(endOutcomeConfig: string[][]) {
         if (this.isSpinning) return;
+
+        this.endOutcomeConfig = endOutcomeConfig;
 
         this.isSpinning = true;
         this.isStopping = false;
@@ -437,6 +441,13 @@ class SpinRender extends Component {
             if (this.stopColumns.has(columnIndex)) {
                 // symbol.position.y = Math.floor(symbol.position.y / this.reelRender.cellSize.height) * this.reelRender.cellSize.height;
                 // this.alignSymbolsToReel(index);
+
+                // console.log('this.endOutcomeConfig', this.endOutcomeConfig);
+                // const reel = this.endOutcomeConfig[columnIndex];
+                // const symbolType = reel[index % this.reelRender.gridSize.height];
+
+                // symbol.changeTexture(symbolType);
+                symbol.changeTexture(this.endOutcomeConfig[index % this.reelRender.gridSize.width][Math.floor(index / this.reelRender.gridSize.width)]);
 
                 symbol.position.y = this.getCellPosition(index).y;
             }
