@@ -1,4 +1,5 @@
 import { Application, Assets, Sprite, Container, ViewContainer, Rectangle, Graphics, Ticker, TickerCallback } from 'pixi.js';
+import { Tween } from '@tweenjs/tween.js'
 import { Machine } from "./src/Machine";
 import { urls } from "./img";
 import { SpinButton } from "./src/SpinButton";
@@ -34,6 +35,7 @@ class MainScene extends Container {
 
         const reelRender = reels.addComponent(new ReelRender(reelPosition, startConfig));
         const spinRender = reels.addComponent(new SpinRender());
+        const winRender = reels.addComponent(new WinRender());
 
         const spriteComp = reels.addVisualComponent(Sprite.from('reels_base'));
         spriteComp.anchor.set(0.5);
@@ -59,7 +61,20 @@ class MainScene extends Container {
 
 
 
+        var isSpinning = false;
+        spinRender.onSpinComplete = () => {
+            isSpinning = false;
+            winRender.renderWin(gameLogic.RecentResult.WinMap);
+            winRender.renderLoss(gameLogic.RecentResult.LossMap);
+        }
+
+
         spinButton.on('click', () => {
+            if (isSpinning) return;
+
+            isSpinning = true;
+            reelRender.ResetSymbolsDim();
+
             const newReel = Outcome.resolve();
 
             // const finalResult: string[][] = [
@@ -296,6 +311,17 @@ class ReelRender extends Component {
             this.visibleSymbols.push(symbol);
         }
     }
+
+    public ResetSymbolsDim() {
+        this.visibleSymbols.forEach(symbol => {
+            symbol.sprite.alpha = 1.0;
+        });
+    }
+
+
+    public GetSymbolFromCellPosition(cellPosition: CellPosition): SymbolSprite {
+        return this.visibleSymbols[cellPosition.reel * this.gridSize.width + cellPosition.row];
+    }
 }
 
 
@@ -340,6 +366,8 @@ class SpinRender extends Component {
     isSpinning: boolean = false;
     isStopping: boolean = false;  // New state for stopping
     reelRender: ReelRender;
+
+    onSpinComplete?: () => void;
 
     private spinDuration: number = 2.5; // Total duration of the spin in seconds
     private columnDelayTime: number = 0.5; // Delay time between each column in seconds
@@ -406,6 +434,8 @@ class SpinRender extends Component {
                     this.isStopping = false;
                     this.isSpinning = false;
                     this.alignSymbolsToGrid();
+
+                    this.onSpinComplete?.();
                 }
             }, i * this.stopDelayTime * 1000);
         }
@@ -491,19 +521,26 @@ class SpinRender extends Component {
 class GameLogic {
     private gameMechanic: WinHandler;
 
+    public RecentResult: ResultMap;
+
     constructor() {
         this.gameMechanic = new WaysToWin();
     }
 
     public handleWin(result: string[][]): void {
-        const win = this.gameMechanic.populateWin(result);
+        this.RecentResult = this.gameMechanic.GetResultsMap(result);
 
-        console.log('win', win);
+        console.log('recent result', this.RecentResult);
     }
 }
 
+class ResultMap {
+    public WinMap: Map<string, SymTypeWinInfo>;
+    public LossMap: Map<string, SymTypeWinInfo>;
+}
+
 interface WinHandler {
-    populateWin(result: string[][]): Map<string, SymTypeWinInfo>;
+    GetResultsMap(result: string[][]): ResultMap;
 }
 
 enum SymTypes {
@@ -521,12 +558,17 @@ class WaysToWin implements WinHandler {
 
     constructor() { }
 
-    public populateWin(result: string[][]): Map<string, SymTypeWinInfo> {
+    public GetResultsMap(result: string[][]): ResultMap {
         console.log("Check for win in ", result);
 
         const winMap = new Map<string, SymTypeWinInfo>();
+        const lossMap = new Map<string, SymTypeWinInfo>();
+
+        const typesOfSymbolsInReel = [...new Set(result.flat())];
+
 
         for (const sym in SymTypes) {
+            console.log('Checking for symbol', sym);
             const winInfo = this.checkForWinOfSymbol(sym as SymTypes, result);
             const symWinInfo = new SymTypeWinInfo(winInfo.cellPosition, winInfo.isWin);
             if (winInfo.isWin) {
@@ -534,7 +576,26 @@ class WaysToWin implements WinHandler {
             }
         }
 
-        return winMap;
+        const winningSyms = Array.from(winMap).map(([key, value]) => value.cellPositions).flat();
+
+        for (let row = 0; row < result.length; row++) {
+            for (let col = 0; col < result[row].length; col++) {
+                if (!winningSyms.some(cell => cell.reel === col && cell.row === row)) {
+                    const sym = result[row][col];
+                    if (lossMap.has(sym)) {
+                        const lossInfo = lossMap.get(sym);
+                        lossInfo.cellPositions.push(new CellPosition(col, row));
+                    } else {
+                        const lossInfo = new SymTypeWinInfo([new CellPosition(col, row)], false);
+                        lossMap.set(sym, lossInfo);
+                    }
+                }
+            }
+        }
+
+
+
+        return { WinMap: winMap, LossMap: lossMap };
     }
 
     private checkForWinOfSymbol(symbol: SymTypes, result: string[][]): { cellPosition: CellPosition[]; isWin: boolean } {
@@ -563,7 +624,6 @@ class WaysToWin implements WinHandler {
         const isWin = consecutiveWin >= 3;
         return { cellPosition: cellPositions, isWin };
     }
-
 }
 
 class SymTypeWinInfo {
@@ -583,5 +643,44 @@ class CellPosition {
     constructor(reel: number, row: number) {
         this.reel = reel;
         this.row = row;
+    }
+}
+
+
+class WinRender extends Component {
+    private reelRender: ReelRender;
+
+    constructor() {
+        super();
+
+        setTimeout(() => {
+            this.reelRender = this.gameObject.getComponent(ReelRender);
+        }, 1000);
+    }
+
+    public renderWin(winInfo: Map<string, SymTypeWinInfo>): void {
+        if (winInfo.size === 0) return;
+        console.log('Showing Wins', winInfo);
+
+        const allWinningSyms = Array.from(winInfo).map(([key, value]) => value.cellPositions).flat();
+
+        allWinningSyms.forEach(cell => {
+            this.reelRender.GetSymbolFromCellPosition(cell).sprite.alpha = 1.0;
+        });
+
+    }
+
+    public renderLoss(lossInfo: Map<string, SymTypeWinInfo>): void {
+        if (lossInfo.size === 0) return;
+
+        console.log("Showing Losses", lossInfo);
+
+
+        const allLosingSyms = Array.from(lossInfo).map(([key, value]) => value.cellPositions).flat();
+
+        allLosingSyms.forEach(cell => {
+            this.reelRender.GetSymbolFromCellPosition(cell).sprite.alpha = 0.5;
+        });
+
     }
 }
