@@ -1,14 +1,18 @@
-import { Container, Sprite } from "pixi.js";
+import { Container, Sprite, Texture } from "pixi.js";
 
 export class SymbolSprite extends Container {
     sprite: Sprite;
-    constructor(Sprite: Sprite) {
+    texture: Texture;
+    constructor(sprite: Sprite) {
         super();
 
-        this.sprite = Sprite;
+        this.sprite = sprite;
+        this.texture = sprite.texture;
+
+
         this.sprite.anchor.set(0.5);
         this.addChild(this.sprite);
-        this.sprite.scale.set(0.7);
+        this.sprite.scale.set(1.0);
     }
 
 
@@ -17,6 +21,15 @@ export class SymbolSprite extends Container {
         this.position.set(x, y);
     }
 
+    public changeTexture(texture: string): void {
+        this.texture = Texture.from(texture);
+        this.sprite.texture = Texture.from(texture);
+    }
+
+
+    public getTexture(): Texture {
+        return this.texture;
+    }
 
 
 
