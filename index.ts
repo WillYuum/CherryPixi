@@ -3,7 +3,6 @@ import { Tween } from '@tweenjs/tween.js'
 import { Machine } from "./src/Machine";
 import { urls } from "./img";
 import { SpinButton } from "./src/SpinButton";
-import { SymbolSprite } from "./src/SymbolSprite";
 import { Outcome } from './src/Outcome';
 import { ComponentManager, GameObject } from './src/GameObjectSystem/GameObjectSystem';
 import { ReelRender } from './src/Reels/ReelRender';
@@ -11,31 +10,20 @@ import { SpinRender } from './src/Reels/SpinRender';
 import { WinRender } from './src/Reels/WinRender';
 import { CellPosition, SymTypeWinInfo } from './src/Reels/types';
 
-enum GameStates {
-    IDLE,
-    SPINNING,
-    PRESENTING_OUTCOME,
-}
 
 class MainScene extends Container {
-    private _machine: Machine;
     private _spinButton: SpinButton;
 
-    constructor() {
+    constructor(game: Game, gameLogic: GameLogic) {
         super();
 
         const background = Sprite.from('background');
         this.addChild(background);
 
         this.boundsArea = new Rectangle(0, 0, window.innerWidth, window.innerHeight);
-
         const reelPosition = { x: innerWidth * 0.5, y: innerHeight * 0.5 };
 
-
-        const reels = new GameObject("Reels", this);
-
         const startConfig: string[][] = [
-
             ['high3', 'low1', 'high2'],
             ['low2', 'high3', 'low2'],
             ['low1', 'low1', 'high3'],
@@ -43,6 +31,7 @@ class MainScene extends Container {
             ['high1', 'high1', 'low4'],
         ];
 
+        const reels = new GameObject("Reels", this);
         const reelRender = reels.addComponent(new ReelRender(reelPosition, startConfig));
         const spinRender = reels.addComponent(new SpinRender());
         const winRender = reels.addComponent(new WinRender());
@@ -53,86 +42,165 @@ class MainScene extends Container {
 
 
 
-
-
-        const machine = new Machine();
-        machine.position.set(innerWidth * 0.5 - reels.holder.width * 0.5, innerHeight * 0.5 - reels.holder.height * 0.5);
-        // machine.position.set(innerWidth * 0.5 - reels.width * 0.5, innerHeight * 0.5 - reels.height * 0.5);
-        this.addChild(machine);
-
         const spinButton = new SpinButton();
         spinButton.position.set(innerWidth * 0.85, innerHeight * 0.85);
         this.addChild(spinButton);
 
-        this._machine = machine;
-        this._spinButton = spinButton;
-
-        const gameLogic = new GameLogic();
 
 
-
-        var isSpinning = false;
-        spinRender.onSpinComplete = () => {
-            isSpinning = false;
-            winRender.renderWin(gameLogic.RecentResult.WinMap);
-            winRender.renderLoss(gameLogic.RecentResult.LossMap);
-        }
-
-
-        spinButton.on('click', () => {
-            if (isSpinning) return;
-
-            isSpinning = true;
+        const onEnterSpinState = () => {
             reelRender.ResetSymbolsDim();
 
             const newReel = Outcome.resolve();
-
-            // const finalResult: string[][] = [
-            //     ['high3', 'low1', 'high2'],
-            //     ['low2', 'high3', 'low2'],
-            //     ['low1', 'low1', 'high3'],
-            //     ['low3', 'high1', 'high1'],
-            //     ['high1', 'high1', 'low4'],
-            // ];
-
             gameLogic.handleWin(newReel);
             spinRender.StartSpin(newReel);
-        });
+
+            spinRender.onSpinComplete = () => {
+                game.setState(GameStates.PRESENTING_OUTCOME);
+                onEnterPresentOutCome();
+            }
+        }
+
+        const onEnterPresentOutCome = () => {
+            winRender.renderWin(gameLogic.RecentResult.WinMap);
+            winRender.renderLoss(gameLogic.RecentResult.LossMap);
+            onEnterIdleState();
+
+        }
+
+        const onEnterIdleState = () => {
+            game.setState(GameStates.IDLE);
+            EventBus.getInstance().subscribeOnce(PlayerEvents.PRESS_SPIN, () => {
+                game.setState(GameStates.SPINNING);
+                onEnterSpinState();
+            });
+        }
+
+        onEnterIdleState();
+
+        this._spinButton = spinButton;
     }
 
     update(dt) {
-        this._machine.update(dt);
         this._spinButton.update(dt);
     }
 
-
-
-
-
     public resize() {
         const { innerWidth, innerHeight } = window;
-        this._machine.position.set(innerWidth * 0.5 - this._machine.width * 0.5, innerHeight * 0.5 - this._machine.height * 0.5);
         this._spinButton.position.set(innerWidth * 0.85, innerHeight * 0.85);
     }
 }
 
-class Game {
-    public app: Application;
-    public CurrentState: GameStates;
 
-    constructor() { }
+export class EventBus {
+    private static instance: EventBus;
+    private events: Map<string, Array<Function>> = new Map();
 
-    async initialize(app: Application, urls: any) {
-        this.app = app;
-        await Assets.load(urls);
+    private constructor() { }
+
+    public static getInstance(): EventBus {
+        if (!EventBus.instance) {
+            EventBus.instance = new EventBus();
+        }
+        return EventBus.instance;
     }
 
-    setScene(scene: Container) {
+    public subscribe(event: string, callback: Function): void {
+        if (!this.events.has(event)) {
+            this.events.set(event, []);
+        }
+        this.events.get(event)!.push(callback);
+    }
+
+    public subscribeOnce(event: string, callback: Function): void {
+        const onceCallback = (...args: any[]) => {
+            callback(...args);
+            this.unsubscribe(event, onceCallback);
+        };
+        this.subscribe(event, onceCallback);
+    }
+
+    public unsubscribe(event: string, callback: Function): void {
+        const callbacks = this.events.get(event);
+        if (callbacks) {
+            const index = callbacks.indexOf(callback);
+            if (index !== -1) {
+                callbacks.splice(index, 1);
+            }
+        }
+    }
+
+    public publish(event: string, ...args: any[]): void {
+        const callbacks = this.events.get(event);
+        if (callbacks) {
+            callbacks.forEach(callback => callback(...args));
+        }
+    }
+}
+
+export enum GameStates {
+    IDLE = "Idle",
+    SPINNING = "Spinning",
+    PRESENTING_OUTCOME = "Presenting_Outcome",
+}
+
+
+export enum PlayerEvents {
+    PRESS_SPIN = "Press_Spin",
+}
+
+
+class StateMachine {
+    private currentState: GameStates;
+
+    constructor(private game: Game, private gameLogic: GameLogic) { }
+
+    public setState(stateName: GameStates): void {
+
+        this.currentState = stateName;
+        EventBus.getInstance().publish("stateChanged", stateName); // Publish state change once
+
+    }
+}
+
+
+class Game {
+    public app: Application;
+    private stateMachine: StateMachine;
+    private gameLogic: GameLogic;
+    constructor() { }
+
+    async initialize(app: Application, urls: any): Promise<void> {
+        this.app = app;
+        await Assets.load(urls);
+
+        // Subscribe to state changes for debugging or UI updates
+        EventBus.getInstance().subscribe("stateChanged", (newState: GameStates) => {
+            console.log(`Game state changed to: ${newState}`);
+        });
+
+        // Initialize state machine
+        this.stateMachine = new StateMachine(this, this.gameLogic);
+    }
+
+    setScene(scene: Container): void {
         this.app.stage = scene;
     }
 
-    public setState(state: GameStates) {
-        this.CurrentState = state;
+    public setState(state: GameStates): void {
+        switch (state) {
+            case GameStates.IDLE:
+                this.stateMachine.setState(GameStates.IDLE);
+                break;
+            case GameStates.SPINNING:
+                this.stateMachine.setState(GameStates.SPINNING);
+                break;
+            case GameStates.PRESENTING_OUTCOME:
+                this.stateMachine.setState(GameStates.PRESENTING_OUTCOME);
+                break;
+            default:
+                throw new Error(`Unknown state: ${state}`);
+        }
     }
 }
 
@@ -145,14 +213,15 @@ class Game {
     });
     document.body.appendChild(app.canvas);
 
+
     const game = new Game();
     await game.initialize(app, urls);
 
-    const main = new MainScene();
+    const gameLogic = new GameLogic();
+
+    const main = new MainScene(game, gameLogic);
+
     game.setScene(main);
-
-    game.setState(GameStates.IDLE);
-
 
     window.addEventListener('resize', () => {
         app.resize();
