@@ -246,7 +246,6 @@ class ReelRender extends Component {
             this.stencilMask = new Graphics()
                 .fill({
                     color: 0x000000,
-                    alpha: 0.5,
                 })
                 .rect(0, 0, this.gridSize.width * this.cellSize.width, this.gridSize.height * this.cellSize.height)
                 .endFill();
@@ -579,17 +578,20 @@ class WaysToWin implements WinHandler {
         const winningSyms = Array.from(winMap).map(([key, value]) => value.cellPositions).flat();
 
         for (let row = 0; row < result.length; row++) {
-            for (let col = 0; col < result[row].length; col++) {
-                if (!winningSyms.some(cell => cell.reel === col && cell.row === row)) {
-                    const sym = result[row][col];
-                    if (lossMap.has(sym)) {
-                        const lossInfo = lossMap.get(sym);
-                        lossInfo.cellPositions.push(new CellPosition(col, row));
-                    } else {
-                        const lossInfo = new SymTypeWinInfo([new CellPosition(col, row)], false);
-                        lossMap.set(sym, lossInfo);
-                    }
+            const currentRow = result[row];
+            for (let col = 0; col < currentRow.length; col++) {
+                const isWinningCell = winningSyms.some(cell => cell.reel === col && cell.row === row);
+                if (isWinningCell) continue;
+
+                const sym = currentRow[col];
+
+                let lossInfo = lossMap.get(sym);
+                if (!lossInfo) {
+                    lossInfo = new SymTypeWinInfo([], false);
+                    lossMap.set(sym, lossInfo);
                 }
+
+                lossInfo.cellPositions.push(new CellPosition(col, row));
             }
         }
 
