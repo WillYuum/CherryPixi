@@ -97,6 +97,7 @@ export class ReelRender extends Component {
     public ResetSymbolsDim() {
         this.visibleSymbols.forEach(symbol => {
             symbol.sprite.alpha = 1.0;
+            symbol.sprite.tint = 0xffffff;
         });
     }
 
