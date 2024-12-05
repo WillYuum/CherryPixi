@@ -12,30 +12,34 @@ export class ReelRender extends Component {
 
 
     reelPosition: { x: number, y: number } = { x: 0, y: 0 };
+    startConfig: string[][] = [];
 
     constructor(reelPosition: { x: number, y: number }, startConfig: string[][]) {
         super();
         this.reelPosition = reelPosition;
-        setTimeout(() => {
-            this.renderSymbolsOnStart(startConfig);
+        this.startConfig = startConfig;
+
+    }
+
+    awake(): void {
+        this.renderSymbolsOnStart(this.startConfig);
 
 
-            this.gameObject.holder.boundsArea = new Rectangle(0, 0, this.gridSize.width * this.cellSize.width, this.gridSize.height * this.cellSize.height);
+        this.gameObject.holder.boundsArea = new Rectangle(0, 0, this.gridSize.width * this.cellSize.width, this.gridSize.height * this.cellSize.height);
 
-            this.stencilMask = new Graphics()
-                .fill({
-                    color: 0x000000,
-                })
-                .rect(0, 0, this.gridSize.width * this.cellSize.width, this.gridSize.height * this.cellSize.height)
-                .endFill();
+        this.stencilMask = new Graphics()
+            .fill({
+                color: 0x000000,
+            })
+            .rect(0, 0, this.gridSize.width * this.cellSize.width, this.gridSize.height * this.cellSize.height)
+            .endFill();
 
 
 
-            this.gameObject.holder.addChild(this.stencilMask);
+        this.gameObject.holder.addChild(this.stencilMask);
 
-            this.gameObject.holder.mask = this.stencilMask;
-            this.stencilMask.position.set(this.reelPosition.x - this.gridSize.width * this.cellSize.width * 0.5, this.reelPosition.y - this.gridSize.height * this.cellSize.height * 0.5);
-        }, 1000);
+        this.gameObject.holder.mask = this.stencilMask;
+        this.stencilMask.position.set(this.reelPosition.x - this.gridSize.width * this.cellSize.width * 0.5, this.reelPosition.y - this.gridSize.height * this.cellSize.height * 0.5);
     }
 
 

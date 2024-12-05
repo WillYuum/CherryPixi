@@ -8,6 +8,10 @@ export class Component {
         ComponentManager.getInstance().addComponent(this);
     }
 
+    awake() {
+
+    }
+
     update(deltaTime: number) {
     }
 }
@@ -88,6 +92,12 @@ export class ComponentManager {
             this.instance = new ComponentManager();
         }
         return this.instance;
+    }
+
+    awakeComponents() {
+        for (let component of this.components) {
+            component.awake();
+        }
     }
 
     // Register a component for updating

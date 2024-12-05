@@ -7,12 +7,9 @@ export class WinRender extends Component {
 
     public onPresentWinComplete?: () => void;
 
-    constructor() {
-        super();
 
-        setTimeout(() => {
-            this.reelRender = this.gameObject.getComponent(ReelRender);
-        }, 1000);
+    awake(): void {
+        this.reelRender = this.gameObject.getComponent(ReelRender);
     }
 
     public renderWin(winInfo: Map<string, SymTypeWinInfo>): void {

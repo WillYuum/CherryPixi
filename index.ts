@@ -164,23 +164,29 @@ class Game {
 
 
     const game = new Game();
-    await game.initialize(app, urls);
+    game.initialize(app, urls).then(() => {
+        const gameLogic = new GameLogic();
 
-    const gameLogic = new GameLogic();
+        const main = new MainScene(game, gameLogic);
 
-    const main = new MainScene(game, gameLogic);
+        game.setScene(main);
 
-    game.setScene(main);
 
-    window.addEventListener('resize', () => {
-        app.resize();
-        main.resize();
+        ComponentManager.getInstance().awakeComponents();
+
+
+        window.addEventListener('resize', () => {
+            app.resize();
+            main.resize();
+        });
+
+        app.ticker.add(({ deltaTime, lastTime }) => {
+            main.update(deltaTime);
+
+            ComponentManager.getInstance().updateComponents(deltaTime);
+            TweenManager.getInstance().update(lastTime);
+        });
+
     });
 
-    app.ticker.add(({ deltaTime, lastTime }) => {
-        main.update(deltaTime);
-
-        ComponentManager.getInstance().updateComponents(deltaTime);
-        TweenManager.getInstance().update(lastTime);
-    });
 })();

@@ -17,12 +17,10 @@ export class SpinRender extends Component {
 
     private endOutcomeConfig: string[][];
 
-    constructor() {
-        super();
 
-        setTimeout(() => {
-            this.reelRender = this.gameObject.getComponent(ReelRender);
-        }, 1000);
+    awake(): void {
+
+        this.reelRender = this.gameObject.getComponent(ReelRender);
     }
 
     public update(dt: number) {
