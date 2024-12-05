@@ -81,6 +81,34 @@ export class SymbolSprite extends Container {
         });
     }
 
+    public resetColor(): Promise<boolean> {
+        const color = { r: 1, g: 1, b: 1 };
+
+        const durationInSeconds = 0.25;
+
+        const tween = new Tween(color)
+            .to({ r: 1, g: 1, b: 1 }, durationInSeconds * 1000)
+            .easing(Easing.Cubic.Out)
+            .onUpdate(() => {
+                this.sprite.tint = this.rgbToTint(color);
+            });
+
+        tween.start();
+
+        TweenManager.getInstance().AddTween(tween);
+
+        return new Promise((resolve) => {
+            tween.onComplete(() => {
+
+                this.sprite.tint = this.rgbToTint({ r: 1, g: 1, b: 1 });
+
+                TweenManager.getInstance().RemoveTween(tween);
+                resolve(true);
+            });
+        }
+        );
+    }
+
 
 
 
