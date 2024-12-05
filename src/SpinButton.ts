@@ -30,7 +30,7 @@ export class SpinButton extends Container {
                         this.handleOnHoverOut();
                     });
 
-                    this.button.on("click", this.handleClick);
+                    this.toggleClickSpin(true);
 
                     break;
                 case GameStates.SPINNING:
@@ -40,7 +40,7 @@ export class SpinButton extends Container {
                     this.button.off("pointerover", this.handleOnHover);
                     this.button.off("pointerout", this.handleOnHoverOut);
 
-                    this.button.off("click", this.handleClick);
+                    this.toggleClickSpin(false);
 
                     break;
             }
@@ -51,6 +51,18 @@ export class SpinButton extends Container {
         this.button.on("rightclick", () => {
             EventBus.getInstance().publish(PlayerEvents.TOGGLE_CHEAT);
         });
+    }
+
+    private toggleClickSpin(active: boolean): void {
+        this.button.interactive = active
+
+        if (active) {
+            this.button.on("click", this.handleClick);
+            this.button.on("touchstart", this.handleClick);
+        } else {
+            this.button.off("click", this.handleClick);
+            this.button.off("touchstart", this.handleClick);
+        }
     }
 
 
