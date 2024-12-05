@@ -48,6 +48,7 @@ export class EventBus {
 
 export enum PlayerEvents {
     PRESS_SPIN = "Press_Spin",
+    TOGGLE_CHEAT = "Toggle_Cheat",
 }
 
 export enum GameFlowEvents {

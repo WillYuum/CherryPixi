@@ -46,6 +46,11 @@ export class SpinButton extends Container {
             }
 
         });
+
+
+        this.button.on("rightclick", () => {
+            EventBus.getInstance().publish(PlayerEvents.TOGGLE_CHEAT);
+        });
     }
 
 

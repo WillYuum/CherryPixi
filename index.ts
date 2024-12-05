@@ -8,6 +8,7 @@ import { WinRender } from './src/Reels/WinRender';
 import { TweenManager } from './src/TweenLogic/TweenManager';
 import { EventBus, GameFlowEvents, PlayerEvents } from './src/EventsLogic/EventsBus';
 import { GameLogic } from './src/GameLogic';
+import { Outcome } from './src/Outcome';
 
 
 class MainScene extends Container {
@@ -46,11 +47,17 @@ class MainScene extends Container {
         this.addChild(spinButton);
 
 
+        var cheatMoveActive = false;
+        EventBus.getInstance().subscribe(PlayerEvents.TOGGLE_CHEAT, () => {
+            cheatMoveActive = !cheatMoveActive;
+        });
+
 
         const onEnterSpinState = () => {
             reelRender.ResetSymbolsDim();
 
-            const newReel = Outcome.resolve();
+            const newReel = cheatMoveActive ? Outcome.pickFromRandomWinOutcomes() : Outcome.resolve();
+
             gameLogic.handleWin(newReel);
             spinRender.StartSpin(newReel);
 
