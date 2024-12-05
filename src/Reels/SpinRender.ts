@@ -4,7 +4,7 @@ import { ReelRender } from "./ReelRender";
 export class SpinRender extends Component {
     spinSpeed: number = 25.0;
     isSpinning: boolean = false;
-    isStopping: boolean = false;  // New state for stopping
+    isStopping: boolean = false;
     reelRender: ReelRender;
 
     onSpinComplete?: () => void;
@@ -12,32 +12,24 @@ export class SpinRender extends Component {
     private spinDuration: number = 2.5; // Total duration of the spin in seconds
     private columnDelayTime: number = 0.5; // Delay time between each column in seconds
     private stopDelayTime: number = 0.5; // Delay time between stopping each reel
-    private activeColumns: Set<number> = new Set(); // Tracks which columns are actively spinning
-    private stopColumns: Set<number> = new Set();  // Tracks which columns have stopped
+    private activeColumns: Set<number> = new Set();
+    private stopColumns: Set<number> = new Set();
 
     private endOutcomeConfig: string[][];
 
-
     awake(): void {
-
         this.reelRender = this.gameObject.getComponent(ReelRender);
     }
 
-    public update(dt: number) {
-        if (this.isSpinning) {
-            this.renderSpin(dt);
-        }
-
-        if (this.isStopping) {
-            this.renderStop(dt);
-        }
+    update(dt: number) {
+        if (this.isSpinning) this.renderSpin(dt);
+        if (this.isStopping) this.renderStop(dt);
     }
 
     public StartSpin(endOutcomeConfig: string[][]) {
         if (this.isSpinning) return;
 
         this.endOutcomeConfig = endOutcomeConfig;
-
         this.isSpinning = true;
         this.isStopping = false;
         this.activeColumns.clear();
@@ -45,12 +37,10 @@ export class SpinRender extends Component {
 
         const numColumns = this.reelRender.gridSize.width;
 
-        // Schedule each column to start spinning
         for (let i = 0; i < numColumns; i++) {
             setTimeout(() => {
                 this.activeColumns.add(i);
                 if (i === numColumns - 1) {
-                    // End the spin after the total duration and start the stop sequence
                     setTimeout(() => this.StartStop(), this.spinDuration * 1000);
                 }
             }, i * this.columnDelayTime * 1000);
@@ -61,96 +51,80 @@ export class SpinRender extends Component {
         this.isStopping = true;
         const numColumns = this.reelRender.gridSize.width;
 
-        // Schedule each column to stop one by one
-        for (let i = 0; i <= numColumns; i++) {
+        for (let i = 0; i < numColumns; i++) {
             setTimeout(() => {
                 this.stopColumns.add(i);
                 if (this.stopColumns.size === numColumns) {
-                    // Finalize the stopping sequence
-                    this.isStopping = false;
-                    this.isSpinning = false;
-                    this.alignSymbolsToGrid();
-
-                    this.onSpinComplete?.();
+                    this.finishSpin();
                 }
             }, i * this.stopDelayTime * 1000);
         }
     }
 
+    private finishSpin() {
+        this.isStopping = false;
+        this.isSpinning = false;
+        this.alignSymbolsToGrid();
+        this.onSpinComplete?.();
+    }
+
     private renderSpin(dt: number) {
-        this.reelRender.visibleSymbols.forEach((symbol, index) => {
-            const columnIndex = index % this.reelRender.gridSize.width;
+        const { cellSize, gridSize, reelPosition, visibleSymbols } = this.reelRender;
+
+        visibleSymbols.forEach((symbol, index) => {
+            const columnIndex = index % gridSize.width;
 
             if (this.activeColumns.has(columnIndex)) {
                 symbol.position.y += this.spinSpeed * dt;
 
-                // Reset symbol to the top if it goes out of bounds
-                if (
-                    symbol.position.y >
-                    this.reelRender.reelPosition.y +
-                    this.reelRender.gridSize.height *
-                    this.reelRender.cellSize.height *
-                    0.5
-                ) {
-                    symbol.position.y -=
-                        this.reelRender.gridSize.height * this.reelRender.cellSize.height;
+                const reelHeight = gridSize.height * cellSize.height;
+                if (symbol.position.y > reelPosition.y + reelHeight * 0.5) {
+                    symbol.position.y -= reelHeight;
                 }
             }
         });
     }
 
     private renderStop(dt: number) {
-        // Decrease the speed of the reel based on the stopColumns
-        this.reelRender.visibleSymbols.forEach((symbol, index) => {
-            const columnIndex = index % this.reelRender.gridSize.width;
+        const { gridSize, visibleSymbols } = this.reelRender;
+
+        visibleSymbols.forEach((symbol, index) => {
+            const columnIndex = index % gridSize.width;
 
             if (this.stopColumns.has(columnIndex)) {
-                // symbol.position.y = Math.floor(symbol.position.y / this.reelRender.cellSize.height) * this.reelRender.cellSize.height;
-                // this.alignSymbolsToReel(index);
+                const outcome = this.endOutcomeConfig[columnIndex][Math.floor(index / gridSize.width)];
+                symbol.changeTexture(outcome);
 
-                // console.log('this.endOutcomeConfig', this.endOutcomeConfig);
-                // const reel = this.endOutcomeConfig[columnIndex];
-                // const symbolType = reel[index % this.reelRender.gridSize.height];
-
-                // symbol.changeTexture(symbolType);
-                symbol.changeTexture(this.endOutcomeConfig[index % this.reelRender.gridSize.width][Math.floor(index / this.reelRender.gridSize.width)]);
-
-                symbol.position.y = this.getCellPosition(index).y;
+                const { x, y } = this.getCellPosition(index);
+                symbol.position.set(x, y);
             }
         });
     }
 
     private alignSymbolsToGrid() {
-        const topLeftPositionOfReel = {
-            x: this.reelRender.reelPosition.x - this.reelRender.gridSize.width * this.reelRender.cellSize.width * 0.5,
-            y: this.reelRender.reelPosition.y - this.reelRender.gridSize.height * this.reelRender.cellSize.height * 0.5
-        };
-
         this.reelRender.visibleSymbols.forEach((symbol, index) => {
-            const row = Math.floor(index / this.reelRender.gridSize.width);
-            const col = index % this.reelRender.gridSize.width;
-
-            const xPos = topLeftPositionOfReel.x + col * this.reelRender.cellSize.width + this.reelRender.cellSize.width * 0.5;
-            const yPos = topLeftPositionOfReel.y + row * this.reelRender.cellSize.height + this.reelRender.cellSize.height * 0.5;
-
-            symbol.position.set(xPos, yPos);
+            const { x, y } = this.getCellPosition(index);
+            symbol.position.set(x, y);
         });
     }
 
-
     private getCellPosition(index: number) {
-        const topLeftPositionOfReel = {
-            x: this.reelRender.reelPosition.x - this.reelRender.gridSize.width * this.reelRender.cellSize.width * 0.5,
-            y: this.reelRender.reelPosition.y - this.reelRender.gridSize.height * this.reelRender.cellSize.height * 0.5
+        const { reelPosition, cellSize, gridSize } = this.reelRender;
+
+        const topLeft = {
+            x: reelPosition.x - gridSize.width * cellSize.width * 0.5,
+            y: reelPosition.y - gridSize.height * cellSize.height * 0.5,
         };
 
-        const row = Math.floor(index / this.reelRender.gridSize.width);
-        const col = index % this.reelRender.gridSize.width;
+        const row = Math.floor(index / gridSize.width);
+        const col = index % gridSize.width;
 
-        const xPos = topLeftPositionOfReel.x + col * this.reelRender.cellSize.width + this.reelRender.cellSize.width * 0.5;
-        const yPos = topLeftPositionOfReel.y + row * this.reelRender.cellSize.height + this.reelRender.cellSize.height * 0.5;
+        const xPos = topLeft.x + col * cellSize.width + cellSize.width * 0.5;
+        const yPos = topLeft.y + row * cellSize.height + cellSize.height * 0.5;
 
-        return { x: xPos, y: yPos };
+        return {
+            x: xPos,
+            y: yPos,
+        };
     }
 }
-
