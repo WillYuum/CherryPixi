@@ -2,14 +2,14 @@ import { Component } from "../GameObjectSystem/GameObjectSystem";
 import { ReelRender } from "./ReelRender";
 
 export class SpinRender extends Component {
-    spinSpeed: number = 25.0;
+    spinSpeed: number = 45.0;
     isSpinning: boolean = false;
     isStopping: boolean = false;
     reelRender: ReelRender;
 
     onSpinComplete?: () => void;
 
-    private spinDuration: number = 2.5; // Total duration of the spin in seconds
+    private spinDuration: number = 2.0; // Total duration of the spin in seconds
     private columnDelayTime: number = 0.5; // Delay time between each column in seconds
     private stopDelayTime: number = 0.5; // Delay time between stopping each reel
     private activeColumns: Set<number> = new Set();

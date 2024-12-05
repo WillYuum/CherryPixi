@@ -37,9 +37,11 @@ export class SymbolSprite extends Container {
     public presentWinAnimation(): Promise<boolean> {
         const scale = { scale: this.sprite.scale.x };
 
+        const durationInSeconds = 0.25;
+
         const tween = new Tween(scale)
-            .to({ scale: 1.2 }, 250)
-            .easing(Easing.Quadratic.Out)
+            .to({ scale: 1.2 }, durationInSeconds * 1000)
+            .easing(Easing.Cubic.Out)
             .yoyo(true)
             .repeat(1)
             .onUpdate(() => {
@@ -60,8 +62,10 @@ export class SymbolSprite extends Container {
     public presentLoseAnimation(): Promise<boolean> {
         const color = { r: 1, g: 1, b: 1 };
 
+        const durationInSeconds = 0.25;
+
         const tween = new Tween(color)
-            .to({ r: 0.15, g: 0.15, b: 0.15 }, 250)
+            .to({ r: 0.15, g: 0.15, b: 0.15 }, durationInSeconds * 1000)
             .onUpdate(() => {
                 this.sprite.tint = this.rgbToTint(color);
             });

@@ -19,7 +19,7 @@ export class WinRender extends Component {
             .flatMap(([_, value]) => value.cellPositions)
             .sort((a, b) => a.y - b.y || a.x - b.x);
 
-        const delay = 0.1;
+        const delay = 0.05;
 
         const promises: Array<Promise<boolean>> = [];
         for (let i = 0; i < orderedFromTopToBottom.length; i++) {
