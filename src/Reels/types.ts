@@ -9,11 +9,11 @@ export class SymTypeWinInfo {
 }
 
 export class CellPosition {
-    public reel: number;
-    public row: number;
+    public x: number;
+    public y: number;
 
     constructor(reel: number, row: number) {
-        this.reel = reel;
-        this.row = row;
+        this.x = reel;
+        this.y = row;
     }
 }

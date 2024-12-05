@@ -85,6 +85,6 @@ export class ReelRender extends Component {
 
 
     public GetSymbolFromCellPosition(cellPosition: CellPosition): SymbolSprite {
-        return this.visibleSymbols[cellPosition.reel * this.gridSize.width + cellPosition.row];
+        return this.visibleSymbols[cellPosition.x * this.gridSize.width + cellPosition.y];
     }
 }
