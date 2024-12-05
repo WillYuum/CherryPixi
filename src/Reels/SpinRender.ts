@@ -1,3 +1,4 @@
+import { SymTypes } from "../GameLogic";
 import { Component } from "../GameObjectSystem/GameObjectSystem";
 import { ReelRender } from "./ReelRender";
 
@@ -95,6 +96,11 @@ export class SpinRender extends Component {
                 const reelHeight = gridSize.height * cellSize.height;
                 if (symbol.position.y > reelPosition.y + reelHeight * 0.5) {
                     symbol.position.y -= reelHeight;
+
+                    //randomize symbol sprite selection form symTypes enum
+                    const randomSym = this.reelRender.symbolNames[Math.floor(Math.random() * this.reelRender.symbolNames.length)];
+                    symbol.changeTexture(randomSym);
+
                 }
             }
         });

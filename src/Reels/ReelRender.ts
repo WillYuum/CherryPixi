@@ -2,6 +2,7 @@ import { Graphics, Rectangle, Sprite } from "pixi.js";
 import { Component } from "../GameObjectSystem/GameObjectSystem";
 import { SymbolSprite } from "../SymbolSprite";
 import { CellPosition } from "./types";
+import { SymTypes } from "../GameLogic";
 
 
 export class ReelRender extends Component {
@@ -9,6 +10,8 @@ export class ReelRender extends Component {
     gridSize = { width: 5, height: 3 };
     stencilMask: Graphics;
     cellSize = { width: 200, height: 192 };
+
+    public symbolNames: string[];
 
 
     reelPosition: { x: number, y: number } = { x: 0, y: 0 };
@@ -19,6 +22,7 @@ export class ReelRender extends Component {
         this.reelPosition = reelPosition;
         this.startConfig = startConfig;
 
+        this.symbolNames = Object.values(SymTypes);
     }
 
     awake(): void {

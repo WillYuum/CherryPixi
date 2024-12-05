@@ -25,7 +25,7 @@ interface WinHandler {
     GetResultsMap(result: string[][]): ResultMap;
 }
 
-enum SymTypes {
+export enum SymTypes {
     high1 = 'high1',
     high2 = 'high2',
     high3 = 'high3',
