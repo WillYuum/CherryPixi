@@ -61,6 +61,12 @@ class MainScene extends Container {
         }
 
         const onEnterPresentOutCome = () => {
+
+            if (gameLogic.RecentResult.WinMap.size === 0) {
+                onEnterIdleState();
+                return;
+            }
+
             winRender.renderWin(gameLogic.RecentResult.WinMap);
             winRender.renderLoss(gameLogic.RecentResult.LossMap);
 
