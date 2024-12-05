@@ -58,24 +58,6 @@ export class ReelRender extends Component {
         const startPosition = this.reelPosition
 
         const topLeftPositionOfReel = { x: startPosition.x - this.gridSize.width * cellSize.width * 0.5, y: startPosition.y - this.gridSize.height * cellSize.height * 0.5 };
-        const debugGraphics = new Graphics()
-            .clear()
-            .circle(topLeftPositionOfReel.x, topLeftPositionOfReel.y, 10)
-            .fill(0xae040a);
-
-
-
-        const debugReelsRect = new Graphics()
-            .rect(topLeftPositionOfReel.x, topLeftPositionOfReel.y, this.gridSize.width * cellSize.width, this.gridSize.height * cellSize.height)
-            .stroke(0xae040a);
-
-        this.gameObject.holder.addChild(debugReelsRect);
-
-
-        debugGraphics.zIndex = 1000;
-
-        this.gameObject.holder.addChild(debugGraphics);
-
 
         const toalSymbolSize = this.gridSize.width * this.gridSize.height;
         for (let i = 0; i < toalSymbolSize; i++) {
