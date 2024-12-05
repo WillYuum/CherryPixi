@@ -1,4 +1,6 @@
-import { Container, Sprite, Texture } from "pixi.js";
+import { Easing, Tween } from "@tweenjs/tween.js";
+import { Container, Sprite, Texture, Ticker } from "pixi.js";
+import { TweenManager } from "./TweenLogic/TweenManager";
 
 export class SymbolSprite extends Container {
     sprite: Sprite;
@@ -31,6 +33,30 @@ export class SymbolSprite extends Container {
         return this.texture;
     }
 
+
+    public presentWinAnimation(): Promise<boolean> {
+        const scale = { scale: this.sprite.scale.x };
+
+        const tween = new Tween(scale)
+            .to({ scale: 1.2 }, 250)
+            .easing(Easing.Quadratic.Out)
+            .yoyo(true)
+            .repeat(1)
+            .onUpdate(() => {
+                this.sprite.scale.set(scale.scale);
+            })
+        tween.start();
+
+        TweenManager.getInstance().AddTween(tween);
+
+        return new Promise((resolve) => {
+            tween.onComplete(() => {
+                console.log('Pew pew');
+                TweenManager.getInstance().RemoveTween(tween);
+                resolve(true);
+            });
+        });
+    }
 
 
 

@@ -66,10 +66,8 @@ export class SpinRender extends Component {
         // Schedule each column to stop one by one
         for (let i = 0; i <= numColumns; i++) {
             setTimeout(() => {
-                console.log('stop column', i);
                 this.stopColumns.add(i);
                 if (this.stopColumns.size === numColumns) {
-                    console.log('all columns stopped');
                     // Finalize the stopping sequence
                     this.isStopping = false;
                     this.isSpinning = false;

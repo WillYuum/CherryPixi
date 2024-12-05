@@ -8,6 +8,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@tweenjs/tween.js": "^25.0.0",
     "pixi.js": "^8.3.2"
   },
   "devDependencies": {

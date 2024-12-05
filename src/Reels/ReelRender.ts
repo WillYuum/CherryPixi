@@ -17,7 +17,6 @@ export class ReelRender extends Component {
         super();
         this.reelPosition = reelPosition;
         setTimeout(() => {
-            console.log('this.gameObject', this.gameObject);
             this.renderSymbolsOnStart(startConfig);
 
 

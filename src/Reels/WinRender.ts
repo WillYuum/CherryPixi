@@ -5,6 +5,8 @@ import { SymTypeWinInfo } from "./types";
 export class WinRender extends Component {
     private reelRender: ReelRender;
 
+    public onPresentWinComplete?: () => void;
+
     constructor() {
         super();
 
@@ -15,21 +17,32 @@ export class WinRender extends Component {
 
     public renderWin(winInfo: Map<string, SymTypeWinInfo>): void {
         if (winInfo.size === 0) return;
-        console.log('Showing Wins', winInfo);
 
         const allWinningSyms = Array.from(winInfo).map(([key, value]) => value.cellPositions).flat();
 
-        allWinningSyms.forEach(cell => {
-            this.reelRender.GetSymbolFromCellPosition(cell).sprite.alpha = 1.0;
-        });
+        const delay = 0.1;
 
+        const promises: Array<Promise<boolean>> = [];
+        for (let i = 0; i < allWinningSyms.length; i++) {
+            const onAnimDone = new Promise<boolean>((resolve) => {
+                setTimeout(() => {
+                    this.reelRender.GetSymbolFromCellPosition(allWinningSyms[i]).presentWinAnimation().then(() => {
+                        resolve(true);
+
+                    });
+                }, i * delay * 1000);
+            });
+            promises.push(onAnimDone);
+        }
+
+
+        Promise.allSettled(promises).then(() => {
+            this.onPresentWinComplete?.();
+        });
     }
 
     public renderLoss(lossInfo: Map<string, SymTypeWinInfo>): void {
         if (lossInfo.size === 0) return;
-
-        console.log("Showing Losses", lossInfo);
-
 
         const allLosingSyms = Array.from(lossInfo).map(([key, value]) => value.cellPositions).flat();
 

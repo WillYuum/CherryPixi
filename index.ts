@@ -9,6 +9,7 @@ import { ReelRender } from './src/Reels/ReelRender';
 import { SpinRender } from './src/Reels/SpinRender';
 import { WinRender } from './src/Reels/WinRender';
 import { CellPosition, SymTypeWinInfo } from './src/Reels/types';
+import { TweenManager } from './src/TweenLogic/TweenManager';
 
 
 class MainScene extends Container {
@@ -64,7 +65,10 @@ class MainScene extends Container {
         const onEnterPresentOutCome = () => {
             winRender.renderWin(gameLogic.RecentResult.WinMap);
             winRender.renderLoss(gameLogic.RecentResult.LossMap);
-            onEnterIdleState();
+
+            winRender.onPresentWinComplete = () => {
+                onEnterIdleState();
+            }
 
         }
 
@@ -228,10 +232,11 @@ class Game {
         main.resize();
     });
 
-    app.ticker.add(({ deltaTime }) => {
+    app.ticker.add(({ deltaTime, lastTime }) => {
         main.update(deltaTime);
 
         ComponentManager.getInstance().updateComponents(deltaTime);
+        TweenManager.getInstance().update(lastTime);
     });
 })();
 
@@ -278,7 +283,6 @@ class WaysToWin implements WinHandler {
     constructor() { }
 
     public GetResultsMap(result: string[][]): ResultMap {
-        console.log("Check for win in ", result);
 
         const winMap = new Map<string, SymTypeWinInfo>();
         const lossMap = new Map<string, SymTypeWinInfo>();
@@ -287,7 +291,6 @@ class WaysToWin implements WinHandler {
 
 
         for (const sym in SymTypes) {
-            console.log('Checking for symbol', sym);
             const winInfo = this.checkForWinOfSymbol(sym as SymTypes, result);
             const symWinInfo = new SymTypeWinInfo(winInfo.cellPosition, winInfo.isWin);
             if (winInfo.isWin) {
