@@ -47,7 +47,7 @@ export class WinRender extends Component {
         const allLosingSyms = Array.from(lossInfo).map(([key, value]) => value.cellPositions).flat();
 
         allLosingSyms.forEach(cell => {
-            this.reelRender.GetSymbolFromCellPosition(cell).sprite.alpha = 0.5;
+            this.reelRender.GetSymbolFromCellPosition(cell).presentLoseAnimation();
         });
 
     }

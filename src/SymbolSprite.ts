@@ -51,11 +51,48 @@ export class SymbolSprite extends Container {
 
         return new Promise((resolve) => {
             tween.onComplete(() => {
-                console.log('Pew pew');
                 TweenManager.getInstance().RemoveTween(tween);
                 resolve(true);
             });
         });
+    }
+
+    public presentLoseAnimation(): Promise<boolean> {
+        const color = { r: 1, g: 1, b: 1 };
+
+        const tween = new Tween(color)
+            .to({ r: 0.15, g: 0.15, b: 0.15 }, 250)
+            .onUpdate(() => {
+                this.sprite.tint = this.rgbToTint(color);
+            });
+
+        tween.start();
+
+        TweenManager.getInstance().AddTween(tween);
+
+        return new Promise((resolve) => {
+            tween.onComplete(() => {
+
+                this.sprite.tint = this.rgbToTint({ r: 0.15, g: 0.15, b: 0.15 });
+
+                TweenManager.getInstance().RemoveTween(tween);
+                resolve(true);
+            });
+        });
+    }
+
+
+
+
+    /**
+ * Converts an RGB color object to a PIXI tint value.
+ * @param rgb - The RGB color object with values between 0 and 1.
+ * @returns A number representing the PIXI tint value.
+ */
+    private rgbToTint(rgb: { r: number; g: number; b: number }): number {
+        return Math.round(rgb.r * 255) * 65536 // Convert red
+            + Math.round(rgb.g * 255) * 256   // Convert green
+            + Math.round(rgb.b * 255);       // Convert blue
     }
 
 
