@@ -1,3 +1,23 @@
+class OutcomePicker {
+    constructor(private outcomes: string[][][]) { }
+
+    private lastOutcomeIndex: number = -1;
+
+    getOutcome(): string[][] {
+        let randomIndex = Math.floor(Math.random() * this.outcomes.length);
+        while (randomIndex === this.lastOutcomeIndex) {
+            randomIndex = Math.floor(Math.random() * this.outcomes.length);
+        }
+        this.lastOutcomeIndex = randomIndex;
+        return this.outcomes[randomIndex];
+    }
+
+    public getByindex(index: number): string[][] {
+        return this.outcomes[index];
+    }
+}
+
+
 export class Outcome {
     constructor() { }
 
@@ -18,7 +38,7 @@ export class Outcome {
     }
 
 
-    static winOutcomes: string[][][] = [
+    static winOutcomes = new OutcomePicker([
         [
             ["low2", "low3", "high1"],
             ["high1", "high2", "high1"],
@@ -47,13 +67,17 @@ export class Outcome {
             ["low4", "high3", "high3"],
             ["low3", "low1", "high2"]
         ],
-
-
-    ]
+        [
+            ["high2", "low1", "high3"],
+            ["high2", "low3", "low4"],
+            ["low1", "low4", "high2"],
+            ["low3", "high3", "high2"],
+            ["high2", "high2", "high1"]
+        ]
+    ]);
 
     static pickFromRandomWinOutcomes(): string[][] {
-        const randomIndex = Math.floor(Math.random() * Outcome.winOutcomes.length);
-        // const randomIndex = 3
-        return Outcome.winOutcomes[randomIndex];
+        return Outcome.winOutcomes.getOutcome();
     }
 }
+
