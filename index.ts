@@ -58,6 +58,8 @@ class MainScene extends Container {
 
             const newReel = cheatMoveActive ? Outcome.pickFromRandomWinOutcomes() : Outcome.resolve();
 
+            console.log("Resolved outcome: ", newReel);
+
             gameLogic.handleWin(newReel);
             spinRender.StartSpin(newReel);
 
