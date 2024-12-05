@@ -15,15 +15,17 @@ export class WinRender extends Component {
     public renderWin(winInfo: Map<string, SymTypeWinInfo>): void {
         if (winInfo.size === 0) return;
 
-        const allWinningSyms = Array.from(winInfo).map(([key, value]) => value.cellPositions).flat();
+        const orderedFromTopToBottom = Array.from(winInfo)
+            .flatMap(([_, value]) => value.cellPositions)
+            .sort((a, b) => a.y - b.y || a.x - b.x);
 
         const delay = 0.1;
 
         const promises: Array<Promise<boolean>> = [];
-        for (let i = 0; i < allWinningSyms.length; i++) {
+        for (let i = 0; i < orderedFromTopToBottom.length; i++) {
             const onAnimDone = new Promise<boolean>((resolve) => {
                 setTimeout(() => {
-                    this.reelRender.GetSymbolFromCellPosition(allWinningSyms[i]).presentWinAnimation().then(() => {
+                    this.reelRender.GetSymbolFromCellPosition(orderedFromTopToBottom[i]).presentWinAnimation().then(() => {
                         resolve(true);
 
                     });
