@@ -23,7 +23,7 @@ export class SpinRender extends Component {
 
     update(dt: number) {
         if (this.isSpinning) this.renderSpin(dt);
-        if (this.isStopping) this.renderStop(dt);
+        // if (this.isStopping) this.renderStop(dt);
     }
 
     public StartSpin(endOutcomeConfig: string[][]) {
@@ -50,10 +50,25 @@ export class SpinRender extends Component {
     private StartStop() {
         this.isStopping = true;
         const numColumns = this.reelRender.gridSize.width;
+        const { visibleSymbols, gridSize } = this.reelRender;
 
         for (let i = 0; i < numColumns; i++) {
             setTimeout(() => {
+                this.activeColumns.delete(i);
                 this.stopColumns.add(i);
+
+                visibleSymbols.forEach((symbol, index) => {
+                    const columnIndex = index % gridSize.width;
+
+                    if (columnIndex === i) {
+                        const outcome = this.endOutcomeConfig[columnIndex][Math.floor(index / gridSize.width)];
+                        symbol.changeTexture(outcome);
+
+                        const { x, y } = this.getCellPosition(index);
+                        symbol.position.set(x, y);
+                    }
+                });
+
                 if (this.stopColumns.size === numColumns) {
                     this.finishSpin();
                 }
@@ -85,21 +100,6 @@ export class SpinRender extends Component {
         });
     }
 
-    private renderStop(dt: number) {
-        const { gridSize, visibleSymbols } = this.reelRender;
-
-        visibleSymbols.forEach((symbol, index) => {
-            const columnIndex = index % gridSize.width;
-
-            if (this.stopColumns.has(columnIndex)) {
-                const outcome = this.endOutcomeConfig[columnIndex][Math.floor(index / gridSize.width)];
-                symbol.changeTexture(outcome);
-
-                const { x, y } = this.getCellPosition(index);
-                symbol.position.set(x, y);
-            }
-        });
-    }
 
     private alignSymbolsToGrid() {
         this.reelRender.visibleSymbols.forEach((symbol, index) => {
