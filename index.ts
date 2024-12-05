@@ -1,4 +1,4 @@
-import { Application, Assets, Sprite, Container, ViewContainer, Rectangle, Graphics, Ticker, TickerCallback } from 'pixi.js';
+import { Application, Assets, Sprite, Container, ViewContainer, Rectangle, Graphics, Ticker, TickerCallback, Text } from 'pixi.js';
 import { urls } from "./img";
 import { SpinButton } from "./src/SpinButton";
 import { ComponentManager, GameObject } from './src/GameObjectSystem/GameObjectSystem';
@@ -9,6 +9,7 @@ import { TweenManager } from './src/TweenLogic/TweenManager';
 import { EventBus, GameFlowEvents, PlayerEvents } from './src/EventsLogic/EventsBus';
 import { GameLogic } from './src/GameLogic';
 import { Outcome } from './src/Outcome';
+import { Easing, Tween } from '@tweenjs/tween.js';
 
 
 class MainScene extends Container {
@@ -47,10 +48,21 @@ class MainScene extends Container {
         this.addChild(spinButton);
 
 
+        const text = new Text("Right click button to enable cheat mode", { fill: 0x00000, fontSize: 15 });
+        this.addChild(text);
+        const textPosition = { x: spinButton.position.x - (text.width / 2), y: spinButton.position.y - (spinButton.height / 2) };
+        text.position.set(textPosition.x, textPosition.y);
+
+
         var cheatMoveActive = false;
         EventBus.getInstance().subscribe(PlayerEvents.TOGGLE_CHEAT, () => {
             cheatMoveActive = !cheatMoveActive;
+            text.text = cheatMoveActive ? "Cheat mode enabled" : "Right click button to enable cheat mode";
+
+            const textPosition = { x: spinButton.position.x - (text.width / 2), y: spinButton.position.y - (spinButton.height / 2) };
+            text.position.set(textPosition.x, textPosition.y);
         });
+
 
 
         const onEnterSpinState = () => {

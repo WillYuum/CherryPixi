@@ -77,7 +77,9 @@ export class Outcome {
     ]);
 
     static pickFromRandomWinOutcomes(): string[][] {
+
         return Outcome.winOutcomes.getOutcome();
+        // return Outcome.winOutcomes.getByindex(2);
     }
 }
 
