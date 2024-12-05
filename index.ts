@@ -10,6 +10,7 @@ import { SpinRender } from './src/Reels/SpinRender';
 import { WinRender } from './src/Reels/WinRender';
 import { CellPosition, SymTypeWinInfo } from './src/Reels/types';
 import { TweenManager } from './src/TweenLogic/TweenManager';
+import { EventBus, GameFlowEvents, PlayerEvents } from './src/EventsLogic/EventsBus';
 
 
 class MainScene extends Container {
@@ -95,64 +96,11 @@ class MainScene extends Container {
     }
 }
 
-
-export class EventBus {
-    private static instance: EventBus;
-    private events: Map<string, Array<Function>> = new Map();
-
-    private constructor() { }
-
-    public static getInstance(): EventBus {
-        if (!EventBus.instance) {
-            EventBus.instance = new EventBus();
-        }
-        return EventBus.instance;
-    }
-
-    public subscribe(event: string, callback: Function): void {
-        if (!this.events.has(event)) {
-            this.events.set(event, []);
-        }
-        this.events.get(event)!.push(callback);
-    }
-
-    public subscribeOnce(event: string, callback: Function): void {
-        const onceCallback = (...args: any[]) => {
-            callback(...args);
-            this.unsubscribe(event, onceCallback);
-        };
-        this.subscribe(event, onceCallback);
-    }
-
-    public unsubscribe(event: string, callback: Function): void {
-        const callbacks = this.events.get(event);
-        if (callbacks) {
-            const index = callbacks.indexOf(callback);
-            if (index !== -1) {
-                callbacks.splice(index, 1);
-            }
-        }
-    }
-
-    public publish(event: string, ...args: any[]): void {
-        const callbacks = this.events.get(event);
-        if (callbacks) {
-            callbacks.forEach(callback => callback(...args));
-        }
-    }
-}
-
 export enum GameStates {
     IDLE = "Idle",
     SPINNING = "Spinning",
     PRESENTING_OUTCOME = "Presenting_Outcome",
 }
-
-
-export enum PlayerEvents {
-    PRESS_SPIN = "Press_Spin",
-}
-
 
 class StateMachine {
     private currentState: GameStates;
@@ -162,7 +110,7 @@ class StateMachine {
     public setState(stateName: GameStates): void {
 
         this.currentState = stateName;
-        EventBus.getInstance().publish("stateChanged", stateName); // Publish state change once
+        EventBus.getInstance().publish(GameFlowEvents.STATE_CHANGED, stateName); // Publish state change once
 
     }
 }
@@ -179,7 +127,7 @@ class Game {
         await Assets.load(urls);
 
         // Subscribe to state changes for debugging or UI updates
-        EventBus.getInstance().subscribe("stateChanged", (newState: GameStates) => {
+        EventBus.getInstance().subscribe(GameFlowEvents.STATE_CHANGED, (newState: GameStates) => {
             console.log(`Game state changed to: ${newState}`);
         });
 

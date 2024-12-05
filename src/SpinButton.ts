@@ -1,5 +1,6 @@
 import { Container, Sprite, Texture } from "pixi.js";
-import { EventBus, GameStates, PlayerEvents } from "..";
+import { EventBus, GameFlowEvents, PlayerEvents } from "./EventsLogic/EventsBus";
+import { GameStates } from "..";
 
 export class SpinButton extends Container {
     private button: Sprite;
@@ -11,7 +12,7 @@ export class SpinButton extends Container {
         this.button.anchor.set(0.5);
         this.addChild(this.button);
 
-        EventBus.getInstance().subscribe('stateChanged', (state: string) => {
+        EventBus.getInstance().subscribe(GameFlowEvents.STATE_CHANGED, (state: string) => {
             switch (state) {
                 case GameStates.IDLE:
                     this.button.interactive = true;
