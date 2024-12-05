@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "Nailed It! Games Tech assignment",
   "scripts": {
-    "serve": "parcel index.html --port=8080"
+    "serve": "parcel index.html --port=8080",
+    "build": "parcel build ./index.html --dist-dir ./custom-dist"
   },
   "author": "",
   "license": "ISC",
