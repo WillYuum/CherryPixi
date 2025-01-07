@@ -1,5 +1,9 @@
 import { CellPosition, SymbolTypeResult } from "./Reels/types";
 
+/**
+ * Main goal is to set the game mechanic and us it to handle game results and will be used as
+ * an interface to the game renderer.
+ */
 export class GameLogic {
     private gameMechanic: WinHandler;
 
@@ -35,6 +39,13 @@ export enum SymTypes {
     low4 = 'low4',
 }
 
+
+
+/**
+ * In the "ways to win" mechanic, a win happens when the same symbol appears
+ * in consecutive positions starting from the first three reels. The symbol 
+ * must match on each reel and can continue after the third reel.
+ */
 class WaysToWin implements WinHandler {
     public hasWin: Boolean = false;
 
@@ -49,9 +60,8 @@ class WaysToWin implements WinHandler {
 
 
         for (const sym in SymTypes) {
-            const winInfo = this.checkForWinOfSymbol(sym as SymTypes, result);
-            const symWinInfo = new SymbolTypeResult(winInfo.cellPosition, winInfo.isWin);
-            if (winInfo.isWin) {
+            const symWinInfo = this.GetWayToWinResultOnSymType(sym as SymTypes, result);
+            if (symWinInfo.isWin) {
                 winMap.set(sym, symWinInfo);
             }
         }
@@ -81,7 +91,7 @@ class WaysToWin implements WinHandler {
         return { WinMap: winMap, LossMap: lossMap };
     }
 
-    private checkForWinOfSymbol(symbol: SymTypes, result: string[][]): { cellPosition: CellPosition[]; isWin: boolean } {
+    private GetWayToWinResultOnSymType(symType: SymTypes, result: string[][]): SymbolTypeResult {
         const cellPositions: CellPosition[] = [];
         let consecutiveWin = 0;
 
@@ -90,7 +100,7 @@ class WaysToWin implements WinHandler {
             const matchingPositions: CellPosition[] = [];
 
             for (let col = 0; col < reel.length; col++) {
-                if (reel[col] === symbol) {
+                if (reel[col] === symType) {
                     matchingPositions.push(new CellPosition(col, row));
                 }
             }
@@ -105,6 +115,7 @@ class WaysToWin implements WinHandler {
         }
 
         const isWin = consecutiveWin >= 3;
-        return { cellPosition: cellPositions, isWin };
+
+        return new SymbolTypeResult(cellPositions, isWin);
     }
 }
