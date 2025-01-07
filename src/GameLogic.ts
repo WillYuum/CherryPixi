@@ -1,4 +1,4 @@
-import { CellPosition, SymTypeWinInfo } from "./Reels/types";
+import { CellPosition, SymbolTypeResult } from "./Reels/types";
 
 export class GameLogic {
     private gameMechanic: WinHandler;
@@ -17,8 +17,8 @@ export class GameLogic {
 }
 
 class ResultMap {
-    public WinMap: Map<string, SymTypeWinInfo>;
-    public LossMap: Map<string, SymTypeWinInfo>;
+    public WinMap: Map<string, SymbolTypeResult>;
+    public LossMap: Map<string, SymbolTypeResult>;
 }
 
 interface WinHandler {
@@ -42,15 +42,15 @@ class WaysToWin implements WinHandler {
 
     public GetResultsMap(result: string[][]): ResultMap {
 
-        const winMap = new Map<string, SymTypeWinInfo>();
-        const lossMap = new Map<string, SymTypeWinInfo>();
+        const winMap = new Map<string, SymbolTypeResult>();
+        const lossMap = new Map<string, SymbolTypeResult>();
 
         const typesOfSymbolsInReel = [...new Set(result.flat())];
 
 
         for (const sym in SymTypes) {
             const winInfo = this.checkForWinOfSymbol(sym as SymTypes, result);
-            const symWinInfo = new SymTypeWinInfo(winInfo.cellPosition, winInfo.isWin);
+            const symWinInfo = new SymbolTypeResult(winInfo.cellPosition, winInfo.isWin);
             if (winInfo.isWin) {
                 winMap.set(sym, symWinInfo);
             }
@@ -68,7 +68,7 @@ class WaysToWin implements WinHandler {
 
                 let lossInfo = lossMap.get(sym);
                 if (!lossInfo) {
-                    lossInfo = new SymTypeWinInfo([], false);
+                    lossInfo = new SymbolTypeResult([], false);
                     lossMap.set(sym, lossInfo);
                 }
 

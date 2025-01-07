@@ -1,7 +1,12 @@
 import { Component } from "../GameObjectSystem/GameObjectSystem";
 import { ReelRender } from "./ReelRender";
-import { SymTypeWinInfo } from "./types";
+import { SymbolTypeResult } from "./types";
 
+/*
+    This class is responsible for rendering win animations.
+    It takes in a Map of win info and iterates through each cell position
+    and triggers the win animation for each symbol.
+*/
 export class WinRender extends Component {
     private reelRender: ReelRender;
 
@@ -12,7 +17,7 @@ export class WinRender extends Component {
         this.reelRender = this.gameObject.getComponent(ReelRender);
     }
 
-    public renderWin(winInfo: Map<string, SymTypeWinInfo>): void {
+    public renderWin(winInfo: Map<string, SymbolTypeResult>): void {
         if (winInfo.size === 0) return;
 
         const orderedFromTopToBottom = Array.from(winInfo)
@@ -40,7 +45,7 @@ export class WinRender extends Component {
         });
     }
 
-    public renderLoss(lossInfo: Map<string, SymTypeWinInfo>): void {
+    public renderLoss(lossInfo: Map<string, SymbolTypeResult>): void {
         if (lossInfo.size === 0) return;
 
         const allLosingSyms = Array.from(lossInfo).map(([key, value]) => value.cellPositions).flat();
