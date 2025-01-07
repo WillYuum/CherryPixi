@@ -1,3 +1,17 @@
+/*
+Data outcome would look something like this:
+
+[
+    [ "high1", "high2", "high1" ],  --> reel1
+    [ "high2", "high1", "high1" ],  --> reel2
+    [ "high2", "high2", "low4" ],   --> reel3
+    [ "low3",  "high3", "low4" ],   --> reel4
+    [ "low2",  "low3",  "high1" ]   --> reel5
+]
+*/
+
+
+
 class OutcomePicker {
     constructor(private outcomes: string[][][]) { }
 
