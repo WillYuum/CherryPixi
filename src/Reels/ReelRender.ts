@@ -4,7 +4,10 @@ import { SymbolSprite } from "../SymbolSprite";
 import { CellPosition } from "./types";
 import { SymTypes } from "../GameLogic";
 
-
+/**
+ * Responsible for sizing the cells of the grid and visualizing symbols
+ * & posotiiong them + hold information about the grid and their symbols.
+ */
 export class ReelRender extends Component {
     visibleSymbols: SymbolSprite[] = [];
     gridSize = { width: 5, height: 3 };

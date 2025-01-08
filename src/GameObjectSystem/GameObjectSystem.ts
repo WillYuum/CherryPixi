@@ -1,6 +1,14 @@
+/**
+ * This system should help in splitting game logic from PixiJS rendering logic.
+ */
+
 import { Container, ViewContainer } from "pixi.js";
 
 
+/**
+ *  Base class for all components which will allow to add game logic in
+ *  Example: ReelRender, SpinRender, WinRender
+ */
 export class Component {
     gameObject: GameObject;
 
@@ -18,7 +26,14 @@ export class Component {
 
 
 
-
+/**
+ * GameObject class is a container for components and visual components.
+ * This class will help to keep game and rendering logic separate
+ * but still accessible to each other.
+ * 
+ * Each GameObject will need a holder so if it had visual components,
+ * it can be added to the stage and be rendered.
+ */
 export class GameObject {
     name: string;
     components: Component[] = [];
@@ -78,7 +93,15 @@ export class GameObject {
 
 
 
-
+/**
+ * ComponentManager is a singleton class which will manage all the important parts
+ * in the components so they can run as expected.
+ * These parts are:
+ * 1. Awake all components
+ * 2. Update all components
+ * 3. Add components
+ * 4. Remove components
+ */
 export class ComponentManager {
     private static instance: ComponentManager;
     private components: Set<Component> = new Set();

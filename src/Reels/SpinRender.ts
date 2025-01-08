@@ -2,6 +2,9 @@ import { SymTypes } from "../GameLogic";
 import { Component } from "../GameObjectSystem/GameObjectSystem";
 import { ReelRender } from "./ReelRender";
 
+/**
+ * Responsible for visualizing the spinning of the reels with the help of ReelRender
+ */
 export class SpinRender extends Component {
     spinSpeed: number = 45.0;
     isSpinning: boolean = false;

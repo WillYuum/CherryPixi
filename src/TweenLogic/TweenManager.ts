@@ -1,5 +1,9 @@
 import { Tween } from "@tweenjs/tween.js";
 
+/**
+ * TweenManager is a singleton class that will manage all the tweens in the game
+ * when they're added until they're removed.
+ */
 export class TweenManager {
     private static _instance: TweenManager;
     private tweens: Tween[] = [];
