@@ -1,15 +1,40 @@
 import { Application, Assets, Sprite, Container, ViewContainer, Rectangle, Graphics, Ticker, TickerCallback, Text } from 'pixi.js';
-import { urls } from "./img";
-import { SpinButton } from "./src/SpinButton";
-import { ComponentManager, GameObject } from './src/GameObjectSystem/GameObjectSystem';
-import { ReelRender } from './src/Reels/ReelRender';
-import { SpinRender } from './src/Reels/SpinRender';
-import { WinRender } from './src/Reels/WinRender';
-import { TweenManager } from './src/TweenLogic/TweenManager';
-import { EventBus, GameFlowEvents, PlayerEvents } from './src/EventsLogic/EventsBus';
-import { GameLogic } from './src/GameLogic';
-import { Outcome } from './src/Outcome';
+// import { urls } from "../public/folder";
+import { SpinButton } from "./SpinButton";
+import { ComponentManager, GameObject } from './GameObjectSystem/GameObjectSystem';
+import { ReelRender } from './Reels/ReelRender';
+import { SpinRender } from './Reels/SpinRender';
+import { WinRender } from './Reels/WinRender';
+import { TweenManager } from './TweenLogic/TweenManager';
+import { EventBus, GameFlowEvents, PlayerEvents } from './EventsLogic/EventsBus';
+import { GameLogic } from './GameLogic';
+import { Outcome } from './Outcome';
 import { Easing, Tween } from '@tweenjs/tween.js';
+
+
+const asset_names = [
+    'background.jpg',
+    'reels_base.png',
+    'high1.png',
+    'high2.png',
+    'high3.png',
+    'low1.png',
+    'low2.png',
+    'low3.png',
+    'low4.png',
+    'reels_base.png',
+    'spin_btn_disabled.png',
+    'spin_btn_down.png',
+    'spin_btn_hover.png',
+    'spin_btn_normal.png',
+    'spin_btn_over.png',
+];
+
+const urls = asset_names.map(name => {
+    const aliasName = name.split('.')[0];
+
+    return { alias: aliasName, src: `./assets/${name}` };
+});
 
 
 class MainScene extends Container {

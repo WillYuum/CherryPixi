@@ -1,6 +1,6 @@
 import { Container, Sprite, Texture } from "pixi.js";
 import { EventBus, GameFlowEvents, PlayerEvents } from "./EventsLogic/EventsBus";
-import { GameStates } from "..";
+import { GameStates } from "./index";
 
 export class SpinButton extends Container {
     private button: Sprite;
