@@ -272,8 +272,10 @@ class GameStateController {
         this.stateInjectables = stateInjectables;
     }
 
-    public setState(stateClass: SetStateParam): void {
-        this.currentState?.onExit();
+    public setState<T extends GameState>(stateClass: new (injectables: StateInjectables) => T): void {
+        if (this.currentState) {
+            this.currentState.onExit();
+        }
         this.currentState = new stateClass(this.stateInjectables);
         EventBus.getInstance().publish(GameFlowEvents.STATE_CHANGED, this.currentState.constructor.name);
         this.currentState.onEnter();
