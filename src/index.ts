@@ -7,7 +7,7 @@ import { SpinRender } from './Reels/SpinRender';
 import { WinRender } from './Reels/WinRender';
 import { TweenManager } from './TweenLogic/TweenManager';
 import { EventBus, GameFlowEvents, PlayerEvents } from './EventsLogic/EventsBus';
-import { GameLogic } from './GameLogic';
+import { GameLogic, ResultMap } from './GameLogic';
 import { Outcome } from './Outcome';
 import { Easing, Tween } from '@tweenjs/tween.js';
 
@@ -36,11 +36,19 @@ const urls = asset_names.map(name => {
     return { alias: aliasName, src: `./assets/${name}` };
 });
 
+interface GameScene {
+    onIdle(): void;
+    onSpin(newReel: string[][]): Promise<true>;
+    onResult(resultMap: ResultMap): Promise<true>;
+}
 
-class MainScene extends Container {
+
+class MainScene extends Container implements GameScene {
     private _spinButton: SpinButton;
 
-    constructor(game: Game, gameLogic: GameLogic) {
+    private _reels: GameObject;
+
+    constructor() {
         super();
 
         const background = Sprite.from('background');
@@ -57,12 +65,12 @@ class MainScene extends Container {
             ['high1', 'high1', 'low4'],
         ];
 
-        const reels = new GameObject("Reels", this);
-        const reelRender = reels.addComponent(new ReelRender(reelPosition, startConfig));
-        const spinRender = reels.addComponent(new SpinRender());
-        const winRender = reels.addComponent(new WinRender());
+        this._reels = new GameObject("Reels", this);
+        const reelRender = this._reels.addComponent(new ReelRender(reelPosition, startConfig));
+        const spinRender = this._reels.addComponent(new SpinRender());
+        const winRender = this._reels.addComponent(new WinRender());
 
-        const spriteComp = reels.addVisualComponent(Sprite.from('reels_base'));
+        const spriteComp = this._reels.addVisualComponent(Sprite.from('reels_base'));
         spriteComp.anchor.set(0.5);
         spriteComp.position.set(reelRender.reelPosition.x, reelRender.reelPosition.y);
 
@@ -88,51 +96,51 @@ class MainScene extends Container {
             text.position.set(textPosition.x, textPosition.y);
         });
 
+        this._spinButton = spinButton;
+    }
 
+    onIdle(): void {
+        const reelRender = this._reels.getComponent(ReelRender);
 
-        const onEnterSpinState = () => {
-            reelRender.ResetSymbolsDim();
+        reelRender.ResetSymbolsDim();
+    }
 
-            const newReel = cheatMoveActive ? Outcome.pickFromRandomWinOutcomes() : Outcome.resolve();
+    onSpin(newReel: string[][]): Promise<true> {
 
-            console.log("Resolved outcome: ", newReel);
+        const spinRender = this._reels.getComponent(SpinRender);
 
-            gameLogic.handleWin(newReel);
-            spinRender.StartSpin(newReel);
+        spinRender.StartSpin(newReel);
 
+        const promise = new Promise<true>((resolve, reject) => {
             spinRender.onSpinComplete = () => {
-                game.setState(GameStates.PRESENTING_OUTCOME);
-                onEnterPresentOutCome();
+                resolve(true);
             }
-        }
+        })
 
-        const onEnterPresentOutCome = () => {
+        return promise;
 
-            if (gameLogic.RecentResult.WinMap.size === 0) {
-                onEnterIdleState();
+    }
+
+    onResult(resultMap: ResultMap): Promise<true> {
+        const winRender = this._reels.getComponent(WinRender);
+
+        return new Promise<true>((resolve, reject) => {
+            if (resultMap.WinMap.size === 0) {
+                console.log("No wins");
+                resolve(true);
                 return;
             }
 
-            winRender.renderWin(gameLogic.RecentResult.WinMap);
-            winRender.renderLoss(gameLogic.RecentResult.LossMap);
+            console.log("We are running the win animation");
 
-            winRender.onPresentWinComplete = () => {
-                onEnterIdleState();
-            }
+            winRender.renderWin(resultMap.WinMap);
+            winRender.renderLoss(resultMap.LossMap);
 
-        }
-
-        const onEnterIdleState = () => {
-            game.setState(GameStates.IDLE);
-            EventBus.getInstance().subscribeOnce(PlayerEvents.PRESS_SPIN, () => {
-                game.setState(GameStates.SPINNING);
-                onEnterSpinState();
-            });
-        }
-
-        onEnterIdleState();
-
-        this._spinButton = spinButton;
+            setTimeout(() => {
+                console.log("Win animation complete");
+                resolve(true);
+            }, 1500);
+        });
     }
 
     update(dt) {
@@ -145,65 +153,134 @@ class MainScene extends Container {
     }
 }
 
-export enum GameStates {
-    IDLE = "Idle",
-    SPINNING = "Spinning",
-    PRESENTING_OUTCOME = "Presenting_Outcome",
-}
-
-class StateMachine {
-    private currentState: GameStates;
-
-    constructor(private game: Game, private gameLogic: GameLogic) { }
-
-    public setState(stateName: GameStates): void {
-
-        this.currentState = stateName;
-        EventBus.getInstance().publish(GameFlowEvents.STATE_CHANGED, stateName); // Publish state change once
-
-    }
-}
 
 
 class Game {
+    public GameName: string = "Cherry Pixi";
     public app: Application;
-    private stateMachine: StateMachine;
-    private gameLogic: GameLogic;
+    public gameStateController: GameStateController;
+
     constructor() { }
 
-    async initialize(app: Application, urls: any): Promise<void> {
+    async initialize(app: Application, urls: any, stateController: GameStateController): Promise<void> {
         this.app = app;
+        this.gameStateController = stateController;
         await Assets.load(urls);
 
         // Subscribe to state changes for debugging or UI updates
-        EventBus.getInstance().subscribe(GameFlowEvents.STATE_CHANGED, (newState: GameStates) => {
+        EventBus.getInstance().subscribe(GameFlowEvents.STATE_CHANGED, (newState: string) => {
             console.log(`Game state changed to: ${newState}`);
         });
 
-        // Initialize state machine
-        this.stateMachine = new StateMachine(this, this.gameLogic);
     }
 
     setScene(scene: Container): void {
         this.app.stage = scene;
     }
+}
 
-    public setState(state: GameStates): void {
-        switch (state) {
-            case GameStates.IDLE:
-                this.stateMachine.setState(GameStates.IDLE);
-                break;
-            case GameStates.SPINNING:
-                this.stateMachine.setState(GameStates.SPINNING);
-                break;
-            case GameStates.PRESENTING_OUTCOME:
-                this.stateMachine.setState(GameStates.PRESENTING_OUTCOME);
-                break;
-            default:
-                throw new Error(`Unknown state: ${state}`);
-        }
+class GameState {
+    constructor(protected injectables: StateInjectables) {
+    }
+
+    public onEnter(): void { }
+
+    public onExit(): void { }
+}
+
+interface StateInjectables {
+    game: Game;
+    gameLogic: GameLogic;
+}
+
+export class IdleState extends GameState {
+    public onEnter(): void {
+        const { game } = this.injectables;
+
+        EventBus.getInstance().subscribeOnce(PlayerEvents.PRESS_SPIN, () => {
+            console.log("game.gameStateController", game.gameStateController);
+            game.gameStateController.setState(SpinState);
+        });
+
+        const gameScene: GameScene = game.app.stage as MainScene;
+        gameScene.onIdle();
+
+    }
+
+    public onExit(): void {
+        console.log(`Exiting Idle State`);
     }
 }
+
+export class SpinState extends GameState {
+    constructor(stateInjectable: StateInjectables) {
+        super(stateInjectable);
+    }
+
+
+    public onEnter(): void {
+        const { game, gameLogic } = this.injectables;
+        const newReel = Outcome.resolve();
+
+        console.log("Resolved outcome: ", newReel);
+
+        gameLogic.handleWin(newReel);
+
+        const gameScene: GameScene = game.app.stage as MainScene;
+        const handleOnSpin = gameScene.onSpin(newReel);
+
+        handleOnSpin.then(() => {
+            game.gameStateController.setState(ResultState);
+        });
+    }
+
+    public onExit(): void {
+        console.log(`Exiting Spin State`);
+    }
+}
+
+export class ResultState extends GameState {
+    constructor(stateInjectable: StateInjectables) {
+        super(stateInjectable);
+    }
+
+    public onEnter(): void {
+        const { game, gameLogic } = this.injectables;
+
+        const gameScene: GameScene = game.app.stage as MainScene;
+        const handleOnResult = gameScene.onResult(gameLogic.RecentResult);
+
+        handleOnResult.then(() => {
+            game.gameStateController.setState(IdleState);
+        });
+    }
+
+    public onExit(): void {
+        console.log(`Exiting Result State`);
+    }
+}
+
+interface SetStateParam {
+    new(stateInjectables: StateInjectables): GameState;
+}
+
+class GameStateController {
+    private currentState: GameState;
+    private stateInjectables: StateInjectables;
+
+    constructor(stateInjectables: StateInjectables) {
+        this.stateInjectables = stateInjectables;
+    }
+
+    public setState(stateClass: SetStateParam): void {
+        this.currentState?.onExit();
+        this.currentState = new stateClass(this.stateInjectables);
+        EventBus.getInstance().publish(GameFlowEvents.STATE_CHANGED, this.currentState.constructor.name);
+        this.currentState.onEnter();
+    }
+}
+
+
 
 (async () => {
     const app = new Application();
@@ -216,13 +293,21 @@ class Game {
 
 
     const game = new Game();
-    game.initialize(app, urls).then(() => {
-        const gameLogic = new GameLogic();
+    const gameLogic = new GameLogic();
 
-        const main = new MainScene(game, gameLogic);
+    const stateController = new GameStateController({
+        game: game,
+        gameLogic: gameLogic,
+    });
+
+
+
+    game.initialize(app, urls, stateController).then(() => {
+
+        const main = new MainScene();
 
         game.setScene(main);
-
+        stateController.setState(IdleState);
 
         ComponentManager.getInstance().awakeComponents();
 

@@ -1,6 +1,6 @@
 import { Container, Sprite, Texture } from "pixi.js";
 import { EventBus, GameFlowEvents, PlayerEvents } from "./EventsLogic/EventsBus";
-import { GameStates } from "./index";
+import { IdleState, SpinState } from "./index";
 
 export class SpinButton extends Container {
     private button: Sprite;
@@ -14,7 +14,7 @@ export class SpinButton extends Container {
 
         EventBus.getInstance().subscribe(GameFlowEvents.STATE_CHANGED, (state: string) => {
             switch (state) {
-                case GameStates.IDLE:
+                case IdleState.name:
                     this.button.interactive = true;
                     this.button.texture = Texture.from("spin_btn_normal");
 
@@ -33,7 +33,7 @@ export class SpinButton extends Container {
                     this.toggleClickSpin(true);
 
                     break;
-                case GameStates.SPINNING:
+                case SpinState.name:
                     this.button.interactive = false;
                     this.button.texture = Texture.from("spin_btn_disabled");
 
@@ -42,6 +42,9 @@ export class SpinButton extends Container {
 
                     this.toggleClickSpin(false);
 
+                    break;
+
+                default:
                     break;
             }
 

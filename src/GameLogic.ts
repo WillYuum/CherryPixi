@@ -20,7 +20,7 @@ export class GameLogic {
     }
 }
 
-class ResultMap {
+export class ResultMap {
     public WinMap: Map<string, SymbolTypeResult>;
     public LossMap: Map<string, SymbolTypeResult>;
 }
