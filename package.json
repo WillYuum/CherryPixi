@@ -1,7 +1,7 @@
 {
-  "name": "tech-assignment",
+  "name": "cherry-pixi",
   "version": "1.0.0",
-  "description": "Nailed It! Games Tech assignment",
+  "description": "Win Ways Slot Game",
   "scripts": {
     "start": "rsbuild dev",
     "build": "rsbuild build"
