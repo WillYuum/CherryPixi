@@ -1,4 +1,4 @@
-import { Graphics, Rectangle, Sprite } from "pixi.js";
+import { Container, Graphics, Rectangle, Sprite } from "pixi.js";
 import { Component } from "../GameObjectSystem/GameObjectSystem";
 import { SymbolSprite } from "../SymbolSprite";
 import { CellPosition } from "./types";
@@ -13,6 +13,8 @@ export class ReelRender extends Component {
     gridSize = { width: 5, height: 3 };
     stencilMask: Graphics;
     cellSize = { width: 200, height: 192 };
+
+    symbolHolder: Container;
 
     public symbolNames: string[];
 
@@ -29,10 +31,11 @@ export class ReelRender extends Component {
     }
 
     awake(): void {
+        this.symbolHolder = new Container();
         this.renderSymbolsOnStart(this.startConfig);
 
 
-        this.gameObject.holder.boundsArea = new Rectangle(0, 0, this.gridSize.width * this.cellSize.width, this.gridSize.height * this.cellSize.height);
+        this.gameObject.holder.addChild(this.symbolHolder);
 
         this.stencilMask = new Graphics()
             .fill({
@@ -43,9 +46,9 @@ export class ReelRender extends Component {
 
 
 
-        this.gameObject.holder.addChild(this.stencilMask);
+        this.symbolHolder.addChild(this.stencilMask);
 
-        this.gameObject.holder.mask = this.stencilMask;
+        this.symbolHolder.mask = this.stencilMask;
         this.stencilMask.position.set(this.reelPosition.x - this.gridSize.width * this.cellSize.width * 0.5, this.reelPosition.y - this.gridSize.height * this.cellSize.height * 0.5);
     }
 
@@ -78,7 +81,7 @@ export class ReelRender extends Component {
             const yPos = topLeftPositionOfReel.y + row * cellSize.height + (cellSize.height * 0.5);
 
             symbol.position.set(xPos, yPos);
-            this.gameObject.holder.addChild(symbol);
+            this.symbolHolder.addChild(symbol);
             this.visibleSymbols.push(symbol);
         }
     }
@@ -94,5 +97,21 @@ export class ReelRender extends Component {
     public GetSymbolFromCellPosition(cellPosition: CellPosition): SymbolSprite {
         return this.visibleSymbols[cellPosition.row * this.gridSize.width + cellPosition.column];
     }
+
+    public GetPositionFromCellPosition(cellPosition: CellPosition): { x: number, y: number } {
+        return {
+            x: cellPosition.row * this.cellSize.width + this.reelPosition.x,
+            y: cellPosition.column * this.cellSize.height + this.reelPosition.y
+        }
     }
+
+
+    public GetPostionOnReelFromCellPosition(cellPosition: CellPosition): { x: number, y: number } {
+        return {
+            x: this.reelPosition.x - this.gridSize.width * this.cellSize.width * 0.5 + cellPosition.column * this.cellSize.width + (this.cellSize.width * 0.5),
+            y: this.reelPosition.y - this.gridSize.height * this.cellSize.height * 0.5 + cellPosition.row * this.cellSize.height + (this.cellSize.height * 0.5)
+        }
+
+    }
+
 }

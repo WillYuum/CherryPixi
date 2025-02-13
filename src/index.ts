@@ -10,6 +10,7 @@ import { EventBus, GameFlowEvents, PlayerEvents } from './EventsLogic/EventsBus'
 import { GameLogic, ResultMap } from './GameLogic';
 import { Outcome } from './Outcome';
 import { Easing, Tween } from '@tweenjs/tween.js';
+import { RewardTextRender } from './Reels/RewardTextRender';
 
 
 const asset_names = [
@@ -69,12 +70,11 @@ class MainScene extends Container implements GameScene {
         const reelRender = this._reels.addComponent(new ReelRender(reelPosition, startConfig));
         const spinRender = this._reels.addComponent(new SpinRender());
         const winRender = this._reels.addComponent(new WinRender());
+        const rewardTextRender = this._reels.addComponent(new RewardTextRender());
 
         const spriteComp = this._reels.addVisualComponent(Sprite.from('reels_base'));
         spriteComp.anchor.set(0.5);
         spriteComp.position.set(reelRender.reelPosition.x, reelRender.reelPosition.y);
-
-
 
         const spinButton = new SpinButton();
         spinButton.position.set(innerWidth * 0.85, innerHeight * 0.85);
@@ -125,6 +125,7 @@ class MainScene extends Container implements GameScene {
 
     onResult(resultMap: ResultMap): Promise<true> {
         const winRender = this._reels.getComponent(WinRender);
+        const rewardTextRender = this._reels.getComponent(RewardTextRender);
 
         return new Promise<true>((resolve, reject) => {
             if (resultMap.WinMap.size === 0) {
@@ -137,6 +138,10 @@ class MainScene extends Container implements GameScene {
 
             winRender.renderWin(resultMap.WinMap);
             winRender.renderLoss(resultMap.LossMap);
+
+            resultMap.WinMap.forEach((value, key) => {
+                rewardTextRender.RenderRewardText(value);
+            });
 
             setTimeout(() => {
                 console.log("Win animation complete");
