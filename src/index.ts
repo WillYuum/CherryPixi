@@ -87,10 +87,12 @@ class MainScene extends Container implements GameScene {
         text.position.set(textPosition.x, textPosition.y);
 
 
-        var cheatMoveActive = false;
         EventBus.getInstance().subscribe(PlayerEvents.TOGGLE_CHEAT, () => {
-            cheatMoveActive = !cheatMoveActive;
-            text.text = cheatMoveActive ? "Cheat mode enabled" : "Right click button to enable cheat mode";
+            let cheatModeActive = window['cheatModeActive'] as boolean;
+            cheatModeActive = !cheatModeActive;
+            text.text = cheatModeActive ? "Cheat mode enabled" : "Right click button to enable cheat mode";
+
+            window['cheatModeActive'] = cheatModeActive;
 
             const textPosition = { x: spinButton.position.x - (text.width / 2), y: spinButton.position.y - (spinButton.height / 2) };
             text.position.set(textPosition.x, textPosition.y);
@@ -220,7 +222,9 @@ export class SpinState extends GameState {
 
     public onEnter(): void {
         const { game, gameLogic } = this.injectables;
-        const newReel = Outcome.resolve();
+        const cheatModeActive = window['cheatModeActive'] as boolean;
+
+        const newReel = cheatModeActive ? Outcome.pickFromRandomWinOutcomes() : Outcome.resolve();
 
         console.log("Resolved outcome: ", newReel);
 
