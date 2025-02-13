@@ -14,11 +14,11 @@ export class SymbolTypeResult {
 }
 
 export class CellPosition {
-    public x: number;
-    public y: number;
+    public row: number;
+    public column: number;
 
     constructor(reel: number, row: number) {
-        this.x = reel;
-        this.y = row;
+        this.row = reel;
+        this.column = row;
     }
 }

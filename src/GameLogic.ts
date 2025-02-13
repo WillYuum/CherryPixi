@@ -71,7 +71,7 @@ class WaysToWin implements WinHandler {
         for (let row = 0; row < result.length; row++) {
             const currentRow = result[row];
             for (let col = 0; col < currentRow.length; col++) {
-                const isWinningCell = winningSyms.some(cell => cell.x === col && cell.y === row);
+                const isWinningCell = winningSyms.some(cell => cell.row === col && cell.column === row);
                 if (isWinningCell) continue;
 
                 const sym = currentRow[col];

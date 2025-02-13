@@ -22,7 +22,7 @@ export class WinRender extends Component {
 
         const orderedFromTopToBottom = Array.from(winInfo)
             .flatMap(([_, value]) => value.cellPositions)
-            .sort((a, b) => a.y - b.y || a.x - b.x);
+            .sort((a, b) => a.column - b.column || a.row - b.row);
 
         const delay = 0.05;
 
