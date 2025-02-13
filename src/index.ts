@@ -1,16 +1,15 @@
-import { Application, Assets, Sprite, Container, ViewContainer, Rectangle, Graphics, Ticker, TickerCallback, Text } from 'pixi.js';
+import { Application, Assets, Container, Rectangle, Sprite, Text } from 'pixi.js';
 // import { urls } from "../public/folder";
-import { SpinButton } from "./SpinButton";
-import { ComponentManager, GameObject } from './GameObjectSystem/GameObjectSystem';
-import { ReelRender } from './Reels/ReelRender';
-import { SpinRender } from './Reels/SpinRender';
-import { WinRender } from './Reels/WinRender';
-import { TweenManager } from './TweenLogic/TweenManager';
 import { EventBus, GameFlowEvents, PlayerEvents } from './EventsLogic/EventsBus';
 import { GameLogic, ResultMap } from './GameLogic';
+import { ComponentManager, GameObject } from './GameObjectSystem/GameObjectSystem';
 import { Outcome } from './Outcome';
-import { Easing, Tween } from '@tweenjs/tween.js';
+import { ReelRender } from './Reels/ReelRender';
 import { RewardTextRender } from './Reels/RewardTextRender';
+import { SpinRender } from './Reels/SpinRender';
+import { SymbolOutcomeVisualizer } from './Reels/SymbolOutcomeVisualizer';
+import { SpinButton } from "./SpinButton";
+import { TweenManager } from './TweenLogic/TweenManager';
 
 
 const asset_names = [
@@ -69,7 +68,7 @@ class MainScene extends Container implements GameScene {
         this._reels = new GameObject("Reels", this);
         const reelRender = this._reels.addComponent(new ReelRender(reelPosition, startConfig));
         const spinRender = this._reels.addComponent(new SpinRender());
-        const winRender = this._reels.addComponent(new WinRender());
+        const winRender = this._reels.addComponent(new SymbolOutcomeVisualizer());
         const rewardTextRender = this._reels.addComponent(new RewardTextRender());
 
         const spriteComp = this._reels.addVisualComponent(Sprite.from('reels_base'));
@@ -124,7 +123,7 @@ class MainScene extends Container implements GameScene {
     }
 
     onResult(resultMap: ResultMap): Promise<true> {
-        const winRender = this._reels.getComponent(WinRender);
+        const winRender = this._reels.getComponent(SymbolOutcomeVisualizer);
         const rewardTextRender = this._reels.getComponent(RewardTextRender);
 
         return new Promise<true>((resolve, reject) => {

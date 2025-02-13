@@ -7,7 +7,7 @@ import { SymbolTypeResult } from "./types";
     It takes in a Map of win info and iterates through each cell position
     and triggers the win animation for each symbol.
 */
-export class WinRender extends Component {
+export class SymbolOutcomeVisualizer extends Component {
     private reelRender: ReelRender;
 
     public onPresentWinComplete?: () => void;
