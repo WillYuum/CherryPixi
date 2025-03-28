@@ -1,5 +1,5 @@
 import { Container, Graphics, Rectangle, Sprite } from "pixi.js";
-import { Component } from "../GameObjectSystem/GameObjectSystem";
+import { Component } from "@willyuum/pixi-gameobject-system";
 import { SymbolSprite } from "../SymbolSprite";
 import { CellPosition } from "./types";
 import { SymTypes } from "../GameLogic";

@@ -1,5 +1,5 @@
 import { SymTypes } from "../GameLogic";
-import { Component } from "../GameObjectSystem/GameObjectSystem";
+import { Component } from "@willyuum/pixi-gameobject-system";
 import { ReelRender } from "./ReelRender";
 
 /**
