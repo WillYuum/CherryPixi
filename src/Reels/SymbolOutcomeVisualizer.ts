@@ -13,7 +13,7 @@ export class SymbolOutcomeVisualizer extends Component {
     public onPresentWinComplete?: () => void;
 
 
-    awake(): void {
+    onAwake(): void {
         this.reelRender = this.gameObject.getComponent(ReelRender);
     }
 

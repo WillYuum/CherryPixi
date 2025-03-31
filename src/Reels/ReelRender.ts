@@ -30,7 +30,7 @@ export class ReelRender extends Component {
         this.symbolNames = Object.values(SymTypes);
     }
 
-    awake(): void {
+    onAwake(): void {
         this.symbolHolder = new Container();
         this.renderSymbolsOnStart(this.startConfig);
 

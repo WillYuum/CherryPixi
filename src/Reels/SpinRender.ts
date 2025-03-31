@@ -21,11 +21,11 @@ export class SpinRender extends Component {
 
     private endOutcomeConfig: string[][];
 
-    awake(): void {
+    onAwake(): void {
         this.reelRender = this.gameObject.getComponent(ReelRender);
     }
 
-    update(dt: number) {
+    onUpdate(dt: number) {
         if (this.isSpinning) this.renderSpin(dt);
         // if (this.isStopping) this.renderStop(dt);
     }

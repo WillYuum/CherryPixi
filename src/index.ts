@@ -2,7 +2,7 @@ import { Application, Assets, Container, Rectangle, Sprite, Text } from 'pixi.js
 // import { urls } from "../public/folder";
 import { EventBus, GameFlowEvents, PlayerEvents } from './EventsLogic/EventsBus';
 import { GameLogic, ResultMap } from './GameLogic';
-import { ComponentManager, GameObject } from '@willyuum/pixi-gameobject-system';
+import { UpdateComponents, GameObject } from '@willyuum/pixi-gameobject-system';
 import { Outcome } from './Outcome';
 import { ReelRender } from './Reels/ReelRender';
 import { RewardTextRender } from './Reels/RewardTextRender';
@@ -319,8 +319,6 @@ class GameStateController {
         game.setScene(main);
         stateController.setState(IdleState);
 
-        ComponentManager.getInstance().awakeComponents();
-
 
         window.addEventListener('resize', () => {
             app.resize();
@@ -330,7 +328,7 @@ class GameStateController {
         app.ticker.add(({ deltaTime, lastTime }) => {
             main.update(deltaTime);
 
-            ComponentManager.getInstance().updateComponents(deltaTime);
+            UpdateComponents(deltaTime);
             TweenManager.getInstance().update(lastTime);
         });
 
