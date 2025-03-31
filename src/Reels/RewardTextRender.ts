@@ -4,7 +4,6 @@ import { SymbolTypeResult } from "./types";
 import { Graphics, Text } from "pixi.js";
 
 
-
 export class RewardTextRender extends Component {
     private textTrackers: Text[] = [];
 
